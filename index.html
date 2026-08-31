@@ -56,6 +56,8 @@
     <input id="doelKcalR" type="number" inputmode="numeric">
     <label>Doel eiwit per dag (gram)</label>
     <input id="doelEiwit" type="number" inputmode="numeric">
+    <label>Cloudflare Worker-URL (het doorgeefluik naar Ollama — zie ollama-worker.js)</label>
+    <input id="proxyUrl" placeholder="https://eten-teller.ps259405.workers.dev">
     <label>Ollama API-sleutel (maak 1 op ollama.com/settings/keys) — blijft alleen op je toestel</label>
     <input id="apiKey" type="password" placeholder="bv. 1234abcd...">
     <label>Ollama cloud model</label>
@@ -119,7 +121,7 @@ const DB = [
   {n:"Pindakaas",       k:620, p:26.0, d:20,  al:["pindakaas","pindasaus"]},
   {n:"Pinda's",         k:567, p:26.0, d:30,  al:["pinda","noten","cashew"]},
   {n:"Olijfolie",       k:884, p:0,    d:15,  al:["olijfolie","olie"]},
-  {n:"Boter",           k:717, p:0.7,  d:10,  al:["boter","margarine"]},
+  {n:"Boter",           k:717, p:0.7, d:10,  al:["boter","margarine"]},
   {n:"Rijst (gaar)",    k:130, p:2.7,  al:["rijst"], stuk:{g:70,k:91,p:1.9}, stuknaam:"lepel"},
   {n:"Aardappelen (gaar)", k:78, p:2.0, d:200, al:["aardappelen","aardappel","friet"]},
   {n:"Pasta (gaar)",    k:131, p:5.0,  d:200, al:["pasta","spaghetti","penne","macaroni","noodles"]},
@@ -127,17 +129,17 @@ const DB = [
   {n:"Banaan",          k:89,  p:1.1,  al:["bananen","banaan"], stuk:{g:110,k:98,p:1.2}},
   {n:"Appel",           k:52,  p:0.3,  al:["appels","appel"], stuk:{g:150,k:78,p:0.5}},
   {n:"Sinaasappel",     k:47,  p:0.9,  d:150, al:["sinaasappel","mandarijn"]},
-  {n:"Spinazie",        k:23,  p:3.0,  d:200, al:["spinazie"]},
-  {n:"Broccoli",        k:34,  p:2.8,  d:200, al:["broccoli"]},
-  {n:"Tomaten",         k:18,  p:0.9,  d:100, al:["tomaten","tomaat"]},
-  {n:"Groenten gemengd",k:53,  p:2.5,  d:150, al:["groenten","groente","roerbak","zomerse"]},
+  {n:"Spinazie",        k:23,  p:3.0, d:200, al:["spinazie"]},
+  {n:"Broccoli",        k:34,  p:2.8, d:200, al:["broccoli"]},
+  {n:"Tomaten",         k:18,  p:0.9, d:100, al:["tomaten","tomaat"]},
+  {n:"Groenten gemengd",k:53,  p:2.5, d:150, al:["groenten","groente","roerbak","zomerse"]},
   {n:"Sla/komkommer/paprika", k:15, p:1.4, d:50, al:["paprika","komkommer","sla"]},
   {n:"Snoep/koek/chocola", k:450, p:4, d:30, al:["stroopwafel","chocolade","koek","snoep","chips"]},
   {n:"Frisdrank (met suiker)", k:42, p:0, d:250, al:["icetea","ice tea","frisdrank","cola","fanta","sprite","sinas"]},
 ];
 
 /* ---------- instellingen & data ---------- */
-const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, apiKey:"", model:"gpt-oss:120b"},
+const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, proxyUrl:"", apiKey:"", model:"gpt-oss:120b"},
   JSON.parse(localStorage.getItem("eten_set") || "{}"));
 function bewaar(){ localStorage.setItem("eten_set", JSON.stringify(SET)); }
 const LOG = JSON.parse(localStorage.getItem("eten_log") || "{}");
@@ -171,10 +173,10 @@ function parseInvoer(t){
     let naam  = m ? ((m[3] || "").trim() || p) : p;
     const f = vindVoeding(naam) || vindVoeding(p);
     if(!f){ fout.push({tekst:p}); continue; }
-    const MEERVT = {"stuks":"stuk","sneetjes":"snee","plakken":"plak","scoops":"scoop","glazen":"glas","eetlepels":"el","theelepels":"tl"};
-    const u = MEERVT[unit] || unit.replace(/s$/, "");
+    const MEERVT = {"stuks":"stuk","sneetjes":"snee","sneetjes":"snee","plakken":"plak","scoops":"scoop","glazen":"glas","eetlepels":"el","theelepels":"tl"};
+    const u = MEERVT[unit] || unit.replace(/s$/,"");
     let gram;
-    if(f.stuk && (getal !== null && (u === "" || ["stuk","plak","snee","scoop","glas","bakje"].includes(u)))){
+    if(f.stuk && (getal !== null && (u === "" || ["stuk","plak","snee","scoop","glas","bakje","stuks"].includes(u)))){
       gram = getal * f.stuk.g;                       // op aantal: "2 eieren", "4 sneetjes brood"
     } else if(u === "kg"){ gram = (getal===null?1:getal) * 1000;
     } else if(u === "dg"){ gram = (getal===null?1:getal) * 10;
@@ -198,6 +200,7 @@ function render(){
   document.getElementById("doelKcalT").value = SET.doelKcalT;
   document.getElementById("doelKcalR").value = SET.doelKcalR;
   document.getElementById("doelEiwit").value = SET.doelEiwit;
+  document.getElementById("proxyUrl").value = SET.proxyUrl;
   document.getElementById("apiKey").value = SET.apiKey;
   document.getElementById("model").value = SET.model;
 
@@ -289,9 +292,10 @@ function toonAI(tekst){
   kn.style.display = "";
 }
 
-/* ---------- AI via Ollama Cloud ---------- */
+/* ---------- AI via Ollama Cloud (door Cloudflare Worker vanwege CORS) ---------- */
 async function ollamaChat(berichten){
-  const antw = await fetch("https://ollama.com/api/chat", {
+  if(!SET.proxyUrl) throw new Error("Geen Worker-URL ingesteld (⚙️ Instellingen)");
+  const antw = await fetch(SET.proxyUrl, {
     method:"POST",
     headers:{"Content-Type":"application/json", "Authorization":"Bearer "+SET.apiKey},
     body: JSON.stringify({model: SET.model || "gpt-oss:120b", stream:false, messages: berichten})
@@ -303,8 +307,8 @@ async function ollamaChat(berichten){
 }
 async function viaAI(){
   const t = document.getElementById("aiKnop").dataset.tekst || document.getElementById("eten").value;
-  if(!SET.apiKey){
-    document.getElementById("resultaat").innerHTML = '<p class="fout">Zet eerst je Ollama API-sleutel in ⚙️ Instellingen (maak er 1 op ollama.com/settings/keys).</p>';
+  if(!SET.apiKey || !SET.proxyUrl){
+    document.getElementById("resultaat").innerHTML = '<p class="fout">Zet eerst je Worker-URL en Ollama API-sleutel in ⚙️ Instellingen (sleutel maak je op ollama.com/settings/keys).</p>';
     return;
   }
   document.getElementById("resultaat").innerHTML = '<p class="klein">🤖 AI rekent uit…</p>';
@@ -336,9 +340,11 @@ async function viaAI(){
 }
 async function testAI(){
   const s = document.getElementById("aiStatus");
+  SET.proxyUrl = document.getElementById("proxyUrl").value.trim();
   SET.apiKey = document.getElementById("apiKey").value.trim();
   SET.model = document.getElementById("model").value.trim() || "gpt-oss:120b";
   bewaar();
+  if(!SET.proxyUrl){ s.textContent = "Vul eerst de Worker-URL in (van Cloudflare)."; return; }
   if(!SET.apiKey){ s.textContent = "Vul eerst een sleutel in."; return; }
   s.textContent = "Testen…";
   try{ await ollamaChat([{role:"user", content:"Antwoord met alleen: ok"}]);
@@ -361,7 +367,7 @@ function toast(m){ const el = document.getElementById("toast");
 
 document.getElementById("eten").addEventListener("keydown", e=>{ if(e.key==="Enter") toevoegen(); });
 document.getElementById("aiKnop").addEventListener("click", viaAI);
-["doelKcalT","doelKcalR","doelEiwit","apiKey","model"].forEach(id=>{
+["doelKcalT","doelKcalR","doelEiwit","proxyUrl","apiKey","model"].forEach(id=>{
   document.getElementById(id).addEventListener("change", e=>{
     const v = e.target.value.trim();
     SET[id] = ["doelKcalT","doelKcalR","doelEiwit"].includes(id) ? (parseInt(v)||SET[id]) : v;
