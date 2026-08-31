@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#10141b">
-<title>Eten Teller</title>
+<title>Fit App</title>
 <style>
   :root { --bg:#10141b; --card:#1a2029; --line:#2a323f; --tekst:#e8ecf1; --grijs:#8b95a3; --groen:#3fb96f; --rood:#e05252; --blauw:#4a9eff; --geel:#e8b84a; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:var(--bg); color:var(--tekst); font-family:-apple-system,'Segoe UI',Roboto,sans-serif; min-height:100vh; padding-bottom:30px; }
+  body { background:var(--bg); color:var(--tekst); font-family:-apple-system,'Segoe UI',Roboto,sans-serif; min-height:100vh; padding-bottom:96px; }
   .top { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px; }
   h1 { font-size:19px; }
-  .knop-ico { background:var(--card); border:1px solid var(--line); color:var(--grijs); border-radius:10px; padding:7px 11px; font-size:14px; }
   main { padding:0 12px; max-width:520px; margin:0 auto; }
   .kaart { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:10px 0; }
+  .kaart h3 { font-size:14px; margin-bottom:6px; }
   .groot { font-size:30px; font-weight:700; }
   .klein { color:var(--grijs); font-size:13px; }
   .rij-tuss { display:flex; justify-content:space-between; gap:10px; margin-top:8px; font-size:14px; }
@@ -35,69 +35,189 @@
   .dagknoppen { display:flex; gap:6px; overflow-x:auto; padding:8px 0; }
   .dagknop { flex:0 0 auto; background:var(--card); border:1px solid var(--line); color:var(--grijs); border-radius:9px; padding:6px 12px; font-size:13px; }
   .dagknop.actief { background:var(--blauw); color:#fff; border-color:var(--blauw); }
-  .inst { display:none; }
-  .inst.open { display:block; }
+  .knop-ico { background:var(--card); border:1px solid var(--line); color:var(--grijs); border-radius:10px; padding:7px 11px; font-size:14px; }
   .inst label { display:block; font-size:13px; color:var(--grijs); margin:12px 0 4px; }
-  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--groen); color:#fff; padding:10px 18px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:9; }
+  .toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:var(--groen); color:#fff; padding:10px 18px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:9; max-width:90%; text-align:center; }
   .toast.zichtbaar { opacity:1; }
+  /* tabs */
+  .tab { display:none; }
+  .tab.actief { display:block; }
+  .tabbalk { position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:space-around; background:var(--card); border-top:1px solid var(--line); padding:5px 4px calc(5px + env(safe-area-inset-bottom)); z-index:10; }
+  .tabknop { background:none; border:none; color:var(--grijs); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 10px; border-radius:10px; }
+  .tabknop .e { font-size:20px; }
+  .tabknop.actief { color:var(--blauw); }
+  /* chips */
+  .chips { display:flex; gap:6px; margin:8px 0 2px; flex-wrap:wrap; }
+  .chip { background:#232b37; border:1px solid var(--line); color:var(--grijs); border-radius:20px; padding:6px 12px; font-size:13px; }
+  .chip.actief { background:var(--blauw); color:#fff; border-color:var(--blauw); }
+  .chip.groen { color:var(--groen); border-color:var(--groen); }
+  /* training */
+  .oef { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:10px 0; }
+  .oef-hoofd { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .oef-hoofd b { font-size:15px; }
+  .oef-doel { color:var(--grijs); font-size:12px; white-space:nowrap; }
+  .oef-sub { font-size:12px; margin-top:4px; }
+  .sets { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 6px; min-height:10px; }
+  .set-chip { background:#232b37; border:1px solid var(--line); color:var(--tekst); border-radius:8px; padding:6px 10px; font-size:13px; }
+  .set-invoer { display:flex; gap:8px; }
+  .set-invoer input { flex:1; }
+  .mini-knop { background:var(--card); border:1px solid var(--line); color:var(--tekst); border-radius:8px; padding:8px 10px; font-size:13px; white-space:nowrap; }
+  .hint { color:var(--geel); }
+  .goed { color:var(--groen); }
+  .rustbalk { position:fixed; left:12px; right:12px; bottom:72px; background:var(--card); border:1px solid var(--blauw); border-radius:14px; padding:10px 14px; display:none; z-index:11; max-width:496px; margin:0 auto; }
+  .rustbalk .fill { height:4px; background:var(--blauw); border-radius:2px; margin-top:8px; }
+  .checkrij { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .check { background:none; border:1px solid var(--line); color:var(--grijs); border-radius:10px; padding:8px 12px; font-size:13px; }
+  .check.aan { color:var(--groen); border-color:var(--groen); }
+  /* schema + charts */
+  .schema { width:100%; border-collapse:collapse; font-size:12px; }
+  .schema th, .schema td { padding:4px 6px; border-bottom:1px solid var(--line); text-align:left; color:var(--grijs); }
+  .schema td:first-child { color:var(--tekst); }
+  .schema tr.huidig td { color:var(--blauw); font-weight:700; }
+  .chart { width:100%; }
+  .chartinfo { font-size:12px; color:var(--grijs); padding-top:4px; min-height:15px; }
+  .weekstrip { display:flex; gap:4px; margin-top:8px; }
+  .stripdag { flex:1; text-align:center; background:#232b37; border:1px solid var(--line); border-radius:8px; padding:6px 2px; font-size:11px; color:var(--grijs); }
+  .stripdag.vandaag { border-color:var(--blauw); }
+  .stripdag b { display:block; font-size:12px; color:var(--tekst); }
+  .stripdag.gedaan b { color:var(--groen); }
 </style>
 </head>
 <body>
 <div class="top">
-  <h1>🍽️ Eten Teller</h1>
-  <button class="knop-ico" onclick="document.getElementById('inst').classList.toggle('open')">⚙️ Instellingen</button>
+  <h1 id="appTitel">💪 Fit App</h1>
 </div>
 <main>
 
-  <div class="kaart inst" id="inst">
-    <label>Doel kcal per trainingsdag (Ma/Di/Do/Vr)</label>
-    <input id="doelKcalT" type="number" inputmode="numeric">
-    <label>Doel kcal per rustdag</label>
-    <input id="doelKcalR" type="number" inputmode="numeric">
-    <label>Doel eiwit per dag (gram)</label>
-    <input id="doelEiwit" type="number" inputmode="numeric">
-    <label>Cloudflare Worker-URL (het doorgeefluik naar Ollama — zie ollama-worker.js)</label>
-    <input id="proxyUrl" placeholder="https://eten-teller.ps259405.workers.dev">
-    <label>Ollama API-sleutel (maak 1 op ollama.com/settings/keys) — blijft alleen op je toestel</label>
-    <input id="apiKey" type="password" placeholder="bv. 1234abcd...">
-    <label>Ollama cloud model</label>
-    <input id="model" placeholder="gpt-oss:120b">
-    <button class="aiknop" onclick="testAI()">🔑 Sleutel testen</button>
-    <p class="fout" id="aiStatus"></p>
-  </div>
-
-  <div class="kaart">
-    <div class="rij-tuss" style="margin:0 0 8px"><span class="klein" id="datumRegel"></span><span class="klein" id="dagType"></span></div>
-    <div class="groot" id="kcalResterend">–</div>
-    <div class="balk"><div id="kcalBalk"></div></div>
-    <div class="rij-tuss"><span id="gegetenKcal" class="klein"></span><span id="eiwitRegel" class="klein"></span></div>
-  </div>
-
-  <div class="kaart">
-    <div class="invoer">
-      <input id="eten" placeholder="bv. 200 gram kip en 2 eieren" autocomplete="off">
-      <button class="hoofdknop" onclick="toevoegen()">＋</button>
+  <!-- ==================== VANDAAG ==================== -->
+  <section class="tab actief" id="tabVandaag">
+    <div class="kaart" id="progKaart"></div>
+    <div class="kaart">
+      <div class="rij-tuss" style="margin:0 0 8px"><span class="klein" id="datumRegel"></span><span class="klein" id="dagType"></span></div>
+      <div class="groot" id="kcalResterend">–</div>
+      <div class="balk"><div id="kcalBalk"></div></div>
+      <div class="rij-tuss"><span id="gegetenKcal" class="klein"></span><span id="eiwitRegel" class="klein"></span></div>
     </div>
-    <div class="uitkomst" id="resultaat"></div>
-    <button class="aiknop" id="aiKnop" style="display:none">🤖 Niet alles herkend — laat AI het uitrekenen</button>
-  </div>
-
-  <div class="dagknoppen" id="dagknoppen"></div>
-
-  <div class="kaart">
-    <div class="rij-tuss" style="margin:0">
-      <b>Log</b>
-      <button class="knop-ico" onclick="exporteer()">📋 Kopieer naar logboek</button>
+    <div class="kaart" id="gewichtKaart"></div>
+    <div class="kaart" id="dagKaart"></div>
+    <div class="kaart">
+      <h3>Deze week</h3>
+      <div class="weekstrip" id="weekstrip"></div>
     </div>
-    <div id="loglijst"></div>
-  </div>
+  </section>
 
-  <div class="kaart">
-    <b style="font-size:14px">Weekoverzicht</b>
-    <div id="week"></div>
-  </div>
+  <!-- ==================== ETEN ==================== -->
+  <section class="tab" id="tabEten">
+    <div class="kaart">
+      <div class="chips" id="maaltijdChips"></div>
+      <div class="invoer">
+        <input id="eten" placeholder="bv. 200 gram kip en 2 eieren" autocomplete="off">
+        <button class="hoofdknop" onclick="toevoegen()">＋</button>
+      </div>
+      <div class="uitkomst" id="resultaat"></div>
+      <button class="aiknop" id="aiKnop" style="display:none">🤖 Niet alles herkend — laat AI het uitrekenen</button>
+    </div>
+
+    <div class="dagknoppen" id="dagknoppen"></div>
+
+    <div class="kaart">
+      <div class="rij-tuss" style="margin:0">
+        <b>Log</b>
+        <button class="knop-ico" onclick="exporteer()">📋 Naar Obsidian</button>
+      </div>
+      <div id="loglijst"></div>
+    </div>
+
+    <div class="kaart">
+      <b style="font-size:14px">Weekoverzicht</b>
+      <div id="week"></div>
+    </div>
+  </section>
+
+  <!-- ==================== TRAINING ==================== -->
+  <section class="tab" id="tabTraining">
+    <div class="kaart" id="schemaKaart"></div>
+    <div class="kaart" id="sessieKaart"></div>
+  </section>
+
+  <!-- ==================== VOORTGANG ==================== -->
+  <section class="tab" id="tabVoortgang">
+    <div class="kaart">
+      <h3>Lichaamsgewicht</h3>
+      <div class="chart" id="chartGewicht"></div>
+      <div class="chartinfo" id="infoGewicht"></div>
+    </div>
+    <div class="kaart">
+      <h3>Topset per hoofdlift</h3>
+      <div class="chips" id="liftChips"></div>
+      <div class="chart" id="chartLift"></div>
+      <div class="chartinfo" id="infoLift"></div>
+    </div>
+    <div class="kaart">
+      <h3>Weekvolume (afgelopen 8 weken)</h3>
+      <div class="chart" id="chartVolume"></div>
+      <div class="chartinfo" id="infoVolume"></div>
+    </div>
+    <div class="kaart">
+      <h3>🏆 Persoonlijke records</h3>
+      <div id="prLijst"></div>
+    </div>
+  </section>
+
+  <!-- ==================== INSTELLINGEN ==================== -->
+  <section class="tab" id="tabInst">
+    <div class="kaart inst">
+      <label>Doel kcal per trainingsdag (Ma/Di/Do/Vr)</label>
+      <input id="doelKcalT" type="number" inputmode="numeric">
+      <label>Doel kcal per rustdag</label>
+      <input id="doelKcalR" type="number" inputmode="numeric">
+      <label>Doel eiwit per dag (gram)</label>
+      <input id="doelEiwit" type="number" inputmode="numeric">
+      <label>Stappen-doel per dag</label>
+      <input id="stappenDoel" type="number" inputmode="numeric">
+      <label>Water-doel per dag (liter)</label>
+      <input id="waterDoel" type="number" inputmode="decimal">
+      <label>Cloudflare Worker-URL (het doorgeefluik naar Ollama — zie ollama-worker.js)</label>
+      <input id="proxyUrl" placeholder="https://eten-teller.ps259405.workers.dev">
+      <label>Ollama API-sleutel (maak 1 op ollama.com/settings/keys) — blijft alleen op je toestel</label>
+      <input id="apiKey" type="password" placeholder="bv. 1234abcd...">
+      <label>Ollama cloud model</label>
+      <input id="model" placeholder="gpt-oss:120b">
+      <button class="aiknop" onclick="testAI()">🔑 Sleutel testen</button>
+      <p class="fout" id="aiStatus"></p>
+    </div>
+    <div class="kaart">
+      <h3>💾 Backup</h3>
+      <p class="klein">Alles staat op dit toestel (localStorage). Maak af en toe een backup.</p>
+      <div class="checkrij">
+        <button class="mini-knop" onclick="backupJSON()">⬇️ Backup downloaden</button>
+        <button class="mini-knop" onclick="document.getElementById('herstelFile').click()">⬆️ Backup herstellen</button>
+        <input type="file" id="herstelFile" accept=".json" style="display:none">
+      </div>
+    </div>
+  </section>
 
 </main>
+
+<nav class="tabbalk">
+  <button class="tabknop actief" data-tab="Vandaag"><span class="e">💪</span>Vandaag</button>
+  <button class="tabknop" data-tab="Eten"><span class="e">🍽️</span>Eten</button>
+  <button class="tabknop" data-tab="Training"><span class="e">🏋️</span>Training</button>
+  <button class="tabknop" data-tab="Voortgang"><span class="e">📊</span>Voortgang</button>
+  <button class="tabknop" data-tab="Inst"><span class="e">⚙️</span>Meer</button>
+</nav>
+
+<div class="rustbalk" id="rustBalk">
+  <div class="rij-tuss" style="margin:0;align-items:center">
+    <b>⏱ Rust <span id="rustTijd">0:00</span></b>
+    <span>
+      <button class="mini-knop" onclick="rustExtra(30)">+30s</button>
+      <button class="mini-knop" onclick="rustStop()">overslaan</button>
+    </span>
+  </div>
+  <div class="fill" id="rustFill" style="width:100%"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -129,31 +249,107 @@ const DB = [
   {n:"Banaan",          k:89,  p:1.1,  al:["bananen","banaan"], stuk:{g:110,k:98,p:1.2}},
   {n:"Appel",           k:52,  p:0.3,  al:["appels","appel"], stuk:{g:150,k:78,p:0.5}},
   {n:"Sinaasappel",     k:47,  p:0.9,  d:150, al:["sinaasappel","mandarijn"]},
-  {n:"Spinazie",        k:23,  p:3.0, d:200, al:["spinazie"]},
-  {n:"Broccoli",        k:34,  p:2.8, d:200, al:["broccoli"]},
-  {n:"Tomaten",         k:18,  p:0.9, d:100, al:["tomaten","tomaat"]},
+  {n:"Spinazie",        k:23,  p:3.0,  d:200, al:["spinazie"]},
+  {n:"Broccoli",        k:34,  p:2.8,  d:200, al:["broccoli"]},
+  {n:"Tomaten",         k:18,  p:0.9,  d:100, al:["tomaten","tomaat"]},
   {n:"Groenten gemengd",k:53,  p:2.5, d:150, al:["groenten","groente","roerbak","zomerse"]},
   {n:"Sla/komkommer/paprika", k:15, p:1.4, d:50, al:["paprika","komkommer","sla"]},
   {n:"Snoep/koek/chocola", k:450, p:4, d:30, al:["stroopwafel","chocolade","koek","snoep","chips"]},
   {n:"Frisdrank (met suiker)", k:42, p:0, d:250, al:["icetea","ice tea","frisdrank","cola","fanta","sprite","sinas"]},
 ];
 
+/* ---------- 12-weken programma (bron: Gym/12-Weken Plan.md) ---------- */
+const PROG_START = "2026-08-31"; // maandag waarop week 1 start (01-09-2026 is een dinsdag)
+const WEEKSCHEMA = {1:"Upper A",2:"Lower A",3:"Cardio",4:"Upper B",5:"Lower B",6:"Rust",0:"Rust"}; // per getDay()
+const TYPETEKST = {
+  "Upper A":"Upper A — zware bench 4×5",
+  "Lower A":"Lower A — squat",
+  "Upper B":"Upper B — volume bench 4×8",
+  "Lower B":"Lower B — deadlift + core",
+  "Cardio":"Cardio — 30–40 min hellingwandelen",
+  "Rust":"Rust 🚶 8.000+ stappen"
+};
+const PLAN = {
+  "Upper A":[
+    {n:"Bankdrukken",sets:4,reps:"5",rust:180,main:1},
+    {n:"Schuin DB press",sets:3,reps:"8–10",rust:90},
+    {n:"Barbell row",sets:3,reps:"6–8",rust:120},
+    {n:"Seated cable row",sets:3,reps:"10–12",rust:90},
+    {n:"Lateral raises",sets:3,reps:"12–15",rust:60},
+    {n:"Triceps pushdown",sets:3,reps:"10–12",rust:60},
+    {n:"Hammer curls",sets:3,reps:"10–12",rust:60}],
+  "Lower A":[
+    {n:"Back squat",sets:4,reps:"5",rust:180,main:1,alt:"bij pijn: leg press of goblet squat"},
+    {n:"Roemeense deadlift",sets:3,reps:"8",rust:120},
+    {n:"Leg press",sets:3,reps:"10–12",rust:120},
+    {n:"Leg curl",sets:3,reps:"10–12",rust:60},
+    {n:"Calves",sets:4,reps:"12–15",rust:45},
+    {n:"Plank",sets:3,reps:"45s",tijd:1,rust:60},
+    {n:"Hanging knee raises",sets:3,reps:"10–15",rust:60}],
+  "Upper B":[
+    {n:"Bankdrukken",sets:4,reps:"8",rust:150,main:1},
+    {n:"Incline press",sets:3,reps:"10",rust:90},
+    {n:"Pull-ups/lat pulldown",sets:4,reps:"8–12",rust:120},
+    {n:"Face pulls",sets:3,reps:"15",rust:60,alt:"belangrijk voor je schouder — verplicht"},
+    {n:"Cable lateral raise",sets:3,reps:"15",rust:60},
+    {n:"EZ bar curl",sets:3,reps:"10–12",rust:60},
+    {n:"Overhead triceps extension",sets:3,reps:"10–12",rust:60}],
+  "Lower B":[
+    {n:"Deadlift",sets:3,reps:"5",rust:210,main:1},
+    {n:"Bulgarian split squat",sets:3,reps:"8/been",rust:90},
+    {n:"Leg extension",sets:3,reps:"12",rust:60},
+    {n:"Hip thrust",sets:3,reps:"10",rust:90},
+    {n:"Calves",sets:4,reps:"12–15",rust:45},
+    {n:"Cable crunch",sets:3,reps:"12–15",rust:60},
+    {n:"Ab wheel",sets:3,reps:"8–10",rust:60}]
+};
+
 /* ---------- instellingen & data ---------- */
-const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, proxyUrl:"", apiKey:"", model:"gpt-oss:120b"},
-  JSON.parse(localStorage.getItem("eten_set") || "{}"));
+const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, stappenDoel:8000, waterDoel:3,
+  proxyUrl:"", apiKey:"", model:"gpt-oss:120b"}, JSON.parse(localStorage.getItem("eten_set") || "{}"));
 function bewaar(){ localStorage.setItem("eten_set", JSON.stringify(SET)); }
 const LOG = JSON.parse(localStorage.getItem("eten_log") || "{}");
 function bewaarLog(){ localStorage.setItem("eten_log", JSON.stringify(LOG)); }
+const GEWICHT = JSON.parse(localStorage.getItem("gewicht_log") || "{}");
+function bewaarGewicht(){ localStorage.setItem("gewicht_log", JSON.stringify(GEWICHT)); }
+const DAGL = JSON.parse(localStorage.getItem("dag_log") || "{}");
+function bewaarDag(){ localStorage.setItem("dag_log", JSON.stringify(DAGL)); }
+const WKL = JSON.parse(localStorage.getItem("wk_log") || "{}");
+function bewaarWk(){ localStorage.setItem("wk_log", JSON.stringify(WKL)); }
 
 const TRAININGSDAGEN = [0,1,3,4]; // ma(0), di(1), do(3), vr(4) — zelfde als Gym/Schedule
 const DAGNAAM = ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"];
+const DAGKORT = ["zo","ma","di","wo","do","vr","za"];
+const MAAL_EMOJI = {ontbijt:"🍳", lunch:"🥪", diner:"🍽️", snack:"🥤"};
 let bekijkDag = dagISO(0);
+let maaltijd = autoMaal();
+let sessie = null; // actieve training in memory: {type, start(ms), oef:[{n,sets,notitie}]}
+let curTab = "Vandaag";
+let topsetKeuze = "Bankdrukken";
+
 function dagISO(terug){ const d = new Date(); d.setDate(d.getDate()-terug);
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function doelVandaag(iso){ const d = new Date(iso+"T12:00");
   return TRAININGSDAGEN.includes((d.getDay()+6)%7) ? SET.doelKcalT : SET.doelKcalR; }
+function vandaagISO(){ return dagISO(0); }
+function autoMaal(){ const h = new Date().getHours(); return h<11 ? "ontbijt" : h<15 ? "lunch" : h<21 ? "diner" : "snack"; }
 
-/* ---------- parser ---------- */
+/* week X van 12 (PROG_START = maandag week 1) */
+function weekNum(iso){
+  const d0 = new Date(PROG_START+"T12:00"), d1 = new Date(iso+"T12:00");
+  const w = Math.floor((d1-d0)/604800000)+1; // 7 dagen
+  return w;
+}
+function faseTekst(w){
+  if(w<1) return "start 31 augustus";
+  if(w<=2) return "terugkomen op oud niveau";
+  if(w===7) return "deload-week: halveer gewichten";
+  if(w<=12) return "lineaire progressie";
+  return "plan afgerond 🎉";
+}
+function typeVandaag(iso){ return WEEKSCHEMA[new Date(iso+"T12:00").getDay()]; }
+
+/* ---------- parser (eten) ---------- */
 function normaal(s){ return s.toLowerCase().replace(/[ëé]/g,"e").replace(/\s+/g," ").trim(); }
 function vindVoeding(c){
   let beste = null, bestLen = 0;
@@ -174,7 +370,7 @@ function parseInvoer(t){
     const f = vindVoeding(naam) || vindVoeding(p);
     if(!f){ fout.push({tekst:p}); continue; }
     const MEERVT = {"stuks":"stuk","sneetjes":"snee","sneetjes":"snee","plakken":"plak","scoops":"scoop","glazen":"glas","eetlepels":"el","theelepels":"tl"};
-    const u = MEERVT[unit] || unit.replace(/s$/,"");
+    const u = MEERVT[unit] || unit.replace(/s$/, "");
     let gram;
     if(f.stuk && (getal !== null && (u === "" || ["stuk","plak","snee","scoop","glas","bakje","stuks"].includes(u)))){
       gram = getal * f.stuk.g;                       // op aantal: "2 eieren", "4 sneetjes brood"
@@ -193,27 +389,41 @@ function parseInvoer(t){
   return {goed, fout};
 }
 
-/* ---------- weergave ---------- */
+/* ---------- algemene weergave ---------- */
 function fmt(x){ return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g,"."); }
-function render(){
-  bewaar();
-  document.getElementById("doelKcalT").value = SET.doelKcalT;
-  document.getElementById("doelKcalR").value = SET.doelKcalR;
-  document.getElementById("doelEiwit").value = SET.doelEiwit;
-  document.getElementById("proxyUrl").value = SET.proxyUrl;
-  document.getElementById("apiKey").value = SET.apiKey;
-  document.getElementById("model").value = SET.model;
+function fmtKg(x){ return String(Math.round(x*10)/10).replace(".",","); }
+function fmtTijd(sec){ return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
-  const doelen = doelVandaag(bekijkDag);
-  const rijen = LOG[bekijkDag] || [];
-  const kDag = rijen.reduce((s,r)=>s+r.kcal,0);
-  const pDag = rijen.reduce((s,r)=>s+r.eiwit,0);
+/* ---------- TABS ---------- */
+const TITELS = {Vandaag:"💪 Fit App", Eten:"🍽️ Eten", Training:"🏋️ Training", Voortgang:"📊 Voortgang", Inst:"⚙️ Instellingen"};
+function wisselTab(n){
+  document.querySelectorAll(".tab").forEach(s=>s.classList.remove("actief"));
+  document.getElementById("tab"+n).classList.add("actief");
+  document.querySelectorAll(".tabknop").forEach(b=>b.classList.toggle("actief", b.dataset.tab===n));
+  document.getElementById("appTitel").textContent = TITELS[n];
+  curTab = n;
+  render();
+}
+
+/* ---------- RENDER: VANDAAG ---------- */
+function renderVandaag(){
+  const iso = vandaagISO();
+  const w = weekNum(iso);
+
+  const prog = document.getElementById("progKaart");
+  const type = typeVandaag(iso);
+  prog.innerHTML = '<div class="rij-tuss" style="margin:0"><span><b>Week '+Math.max(1,Math.min(12,w))+' van 12</b> <span class="klein">· '+faseTekst(w)+'</span></span>'+
+    (PLAN[type] ? '<button class="mini-knop" onclick="wisselTab(\'Training\')">Ga naar training ▸</button>' : '')+'</div>'+
+    '<p class="oef-sub">'+DAGNAAM[new Date(iso+"T12:00").getDay()]+': <b>'+TYPETEKST[type]+'</b></p>';
+
+  // kcal/ewit — altijd vandaag
+  const doelen = doelVandaag(iso), rijen = LOG[iso] || [];
+  const kDag = rijen.reduce((s,r)=>s+r.kcal,0), pDag = rijen.reduce((s,r)=>s+r.eiwit,0);
   const pct = Math.min(100, kDag/doelen*100);
-  const isTrain = doelen === SET.doelKcalT;
-
   document.getElementById("datumRegel").textContent =
-    DAGNAAM[new Date(bekijkDag+"T12:00").getDay()] + " " + bekijkDag.split("-").reverse().join("-");
-  document.getElementById("dagType").textContent = (isTrain?"🏋️ Trainingsdag":"😴 Rustdag") + " · doel " + fmt(doelen) + " kcal";
+    DAGNAAM[new Date().getDay()] + " " + iso.split("-").reverse().join("-");
+  document.getElementById("dagType").textContent = (doelen===SET.doelKcalT?"🏋️ Trainingsdag":"😴 Rustdag") + " · doel " + fmt(doelen) + " kcal";
   document.getElementById("kcalResterend").textContent = fmt(Math.max(0, doelen-kDag)) + " kcal over";
   const balk = document.getElementById("kcalBalk");
   balk.style.width = pct + "%";
@@ -222,12 +432,96 @@ function render(){
   document.getElementById("eiwitRegel").textContent = "🥩 Eiwit: " + fmt(pDag) + " / " + SET.doelEiwit +
     " g (nog " + fmt(Math.max(0, SET.doelEiwit-pDag)) + " g over)";
 
+  // gewicht
+  const isos = Object.keys(GEWICHT).sort();
+  const vandaagG = GEWICHT[iso];
+  let delta = "";
+  if(isos.length){
+    const vorigeIso = isos.filter(d=>d!==iso).pop();
+    if(vorigeIso && vandaagG){
+      const d = vandaagG.kg - GEWICHT[vorigeIso].kg;
+      delta = ' <span class="klein">('+(d>0?"+":"")+fmtKg(d)+" vs vorige)</span>";
+    }
+  }
+  document.getElementById("gewichtKaart").innerHTML =
+    '<h3>⚖️ Gewicht vanochtend</h3>'+
+    '<div class="invoer"><input id="gewichtVeld" type="text" inputmode="decimal" placeholder="bv. 63,4" '+
+    (vandaagG?'value="'+fmtKg(vandaagG.kg)+'"':'')+'><button class="hoofdknop" onclick="slaGewicht()">Opslaan</button></div>'+
+    (vandaagG ? '<p class="oef-sub klein">Vandaag: <b>'+fmtKg(vandaagG.kg)+' kg</b>'+delta+
+      ' <button class="mini-knop" style="margin-left:6px" onclick="exportGewicht()">📋 Weight.md</button></p>'
+      : '<p class="oef-sub klein">Elke ochtend na toilet, vóór eten —zelfde tijdstip.</p>');
+
+  // checklist: supplementen / water / stappen
+  const d = DAGL[iso] || {stappen:0, water:0, sup:{}};
+  const sup = d.sup || {};
+  const waterPct = Math.min(100, d.water/(SET.waterDoel||3)*100);
+  document.getElementById("dagKaart").innerHTML =
+    '<h3>✅ Dagcheck</h3>'+
+    '<div class="checkrij">'+
+    ['creatine','vitd','mag'].map(s=>'<button class="check '+(sup[s]?'aan':'')+'" onclick="supCheck(\''+s+'\')">'+(sup[s]?'✓ ':'')+
+      (s==='creatine'?'💊 Creatine 3–5g':s==='vitd'?'☀️ Vit D3':'🌙 Magnesium')+'</button>').join("")+
+    '</div>'+
+    '<div class="rij-tuss" style="margin-top:12px"><span>💧 Water <b id="waterTxt">'+fmtKg(d.water||0)+' / '+fmtKg(SET.waterDoel||3)+' L</b></span>'+
+    '<button class="mini-knop" onclick="waterPlus()">+0,25 L</button></div>'+
+    '<div class="balk"><div style="width:'+waterPct+'%;background:var(--blauw)"></div></div>'+
+    '<div class="rij-tuss" style="margin-top:12px"><span>👟 Stappen</span>'+
+    '<input id="stappenVeld" type="number" inputmode="numeric" style="width:110px;padding:8px" placeholder="0" value="'+(d.stappen||'')+
+    '" onchange="slaStappen(this.value)"><span class="klein">/ '+fmt(SET.stappenDoel||8000)+'</span></div>';
+
+  // weekstrip
+  const vdag = (new Date().getDay()+6)%7; // 0 = maandag
+  let strip = "";
+  for(let i=0;i<7;i++){
+    const d2 = new Date(); d2.setDate(d2.getDate()-vdag+i);
+    const diso = d2.getFullYear()+"-"+String(d2.getMonth()+1).padStart(2,"0")+"-"+String(d2.getDate()).padStart(2,"0");
+    const t = WEEKSCHEMA[d2.getDay()];
+    const kort = t==="Rust" ? "rust" : t==="Cardio" ? "cardio" : t.split(" ")[1];
+    strip += '<div class="stripdag '+(diso===iso?"vandaag ":"")+(WKL[diso]?"gedaan":"")+'"><b>'+
+      (WKL[diso]?"✓":kort)+'</b>'+DAGKORT[d2.getDay()]+'</div>';
+  }
+  document.getElementById("weekstrip").innerHTML = strip;
+}
+function slaGewicht(){
+  const v = parseFloat((document.getElementById("gewichtVeld").value||"").replace(",","."));
+  if(!v || v<25 || v>250){ toast("Vul een geldig gewicht in (bv. 63,4)"); return; }
+  GEWICHT[vandaagISO()] = {kg:v, taille:"", notitie:""};
+  bewaarGewicht(); renderVandaag();
+  toast("⚖️ "+fmtKg(v)+" kg opgeslagen");
+}
+function supCheck(s){
+  const iso = vandaagISO();
+  if(!DAGL[iso]) DAGL[iso] = {stappen:0, water:0, sup:{}};
+  if(!DAGL[iso].sup) DAGL[iso].sup = {};
+  DAGL[iso].sup[s] = !DAGL[iso].sup[s];
+  bewaarDag(); renderVandaag();
+}
+function waterPlus(){
+  const iso = vandaagISO();
+  if(!DAGL[iso]) DAGL[iso] = {stappen:0, water:0, sup:{}};
+  DAGL[iso].water = Math.round(((DAGL[iso].water||0)+0.25)*100)/100;
+  bewaarDag(); renderVandaag();
+}
+function slaStappen(v){
+  const iso = vandaagISO();
+  if(!DAGL[iso]) DAGL[iso] = {stappen:0, water:0, sup:{}};
+  DAGL[iso].stappen = parseInt(v)||0;
+  bewaarDag(); toast("👟 "+fmt(DAGL[iso].stappen)+" stappen");
+}
+
+/* ---------- RENDER: ETEN ---------- */
+function renderEten(){
+  // maaltijd-chips
+  document.getElementById("maaltijdChips").innerHTML =
+    ["ontbijt","lunch","diner","snack"].map(m=>'<button class="chip '+(maaltijd===m?"actief":"")+'" onclick="kiesMaal(\''+m+'\')">'+MAAL_EMOJI[m]+' '+m[0].toUpperCase()+m.slice(1)+'</button>').join("");
+
   const lijst = document.getElementById("loglijst"); lijst.innerHTML = "";
+  const rijen = LOG[bekijkDag] || [];
   if(!rijen.length) lijst.innerHTML = '<p class="klein" style="padding:8px 2px">Nog niets gelogd op deze dag.</p>';
-  (LOG[bekijkDag]||[]).forEach((r,i)=>{
+  rijen.forEach((r,i)=>{
     const div = document.createElement("div"); div.className = "logitem";
     const src = r.src==="Ai" ? "" : ' <span class="klein">· '+r.gram+' g</span>';
-    div.innerHTML = '<span class="naam">'+r.naam+src+'</span><span class="mac">'+r.kcal+' kcal · '+r.eiwit+' g ei</span>';
+    const maal = r.maal ? MAAL_EMOJI[r.maal]+" " : "";
+    div.innerHTML = '<span class="naam">'+maal+esc(r.naam)+src+'</span><span class="mac">'+r.kcal+' kcal · '+r.eiwit+' g ei</span>';
     const b = document.createElement("button"); b.className = "del"; b.textContent = "🗑";
     b.onclick = ()=>{ LOG[bekijkDag].splice(i,1); bewaarLog(); render(); };
     div.appendChild(b); lijst.appendChild(div);
@@ -239,7 +533,7 @@ function render(){
     const b = document.createElement("button");
     b.className = "dagknop" + (iso===bekijkDag ? " actief":"");
     const tot = (LOG[iso]||[]).reduce((s,r)=>s+r.kcal,0);
-    b.textContent = DAGNAAM[d.getDay()].slice(0,2) + (tot ? " " + fmt(tot) : "");
+    b.textContent = DAGKORT[d.getDay()] + (tot ? " " + fmt(tot) : "");
     b.onclick = ()=>{ bekijkDag = iso; render(); };
     dk.appendChild(b);
   }
@@ -259,6 +553,7 @@ function render(){
   if(dagenMet) wk.innerHTML += '<p class="klein" style="padding:8px 2px">Gemiddeld op deze '+dagenMet+' log-dagen: '+
     fmt(wkK/dagenMet)+' kcal · '+fmt(wkP/dagenMet)+' g eiwit.</p>';
 }
+function kiesMaal(m){ maaltijd = m; renderEten(); }
 
 function toevoegen(){
   const t = document.getElementById("eten").value;
@@ -267,19 +562,19 @@ function toevoegen(){
   document.getElementById("resultaat").innerHTML = "";
   if(!r.goed.length){
     document.getElementById("resultaat").innerHTML =
-      '<p class="fout">Niks herkend in "'+t+'". Probeer bijv. "350 gram rijst en 150 gram kip" — of gebruik de AI-knop.</p>';
+      '<p class="fout">Niks herkend in "'+esc(t)+'". Probeer bijv. "350 gram rijst en 150 gram kip" — of gebruik de AI-knop.</p>';
     toonAI(t); return;
   }
   if(!LOG[bekijkDag]) LOG[bekijkDag] = [];
-  r.goed.forEach(g=>LOG[bekijkDag].push({naam:g.naam, gram:g.gram, kcal:g.kcal, eiwit:g.eiwit}));
+  r.goed.forEach(g=>LOG[bekijkDag].push({naam:g.naam, gram:g.gram, kcal:g.kcal, eiwit:g.eiwit, maal:maaltijd}));
   bewaarLog();
   let html = "";
-  r.goed.forEach(g=>{ html += '<div class="gevonden"><span>'+g.naam+' <span class="klein">· '+g.gram+' g</span></span><span><b>'+g.kcal+' kcal</b> · '+g.eiwit+' g ei</span></div>'; });
+  r.goed.forEach(g=>{ html += '<div class="gevonden"><span>'+MAAL_EMOJI[maaltijd]+' '+g.naam+' <span class="klein">· '+g.gram+' g</span></span><span><b>'+g.kcal+' kcal</b> · '+g.eiwit+' g ei</span></div>'; });
   const totK = r.goed.reduce((s,g)=>s+g.kcal,0), totP = Math.round(r.goed.reduce((s,g)=>s+g.eiwit,0)*10)/10;
   html += '<div class="totaal-rij"><span>Totaal</span><span>'+fmt(totK)+' kcal · '+totP+' g ei</span></div>';
   document.getElementById("resultaat").innerHTML = html;
   if(r.fout.length){
-    document.getElementById("resultaat").innerHTML += '<p class="fout">Niet herkend: '+r.fout.map(f=>'"'+f.tekst+'"').join(", ")+'</p>';
+    document.getElementById("resultaat").innerHTML += '<p class="fout">Niet herkend: '+r.fout.map(f=>'"'+esc(f.tekst)+'"').join(", ")+'</p>';
     toonAI(t);
   } else document.getElementById("aiKnop").style.display = "none";
   document.getElementById("eten").value = "";
@@ -291,6 +586,316 @@ function toonAI(tekst){
   kn.dataset.tekst = tekst;
   kn.style.display = "";
 }
+
+/* ---------- RENDER: MASTER ---------- */
+function render(){
+  document.getElementById("doelKcalT").value = SET.doelKcalT;
+  document.getElementById("doelKcalR").value = SET.doelKcalR;
+  document.getElementById("doelEiwit").value = SET.doelEiwit;
+  document.getElementById("stappenDoel").value = SET.stappenDoel;
+  document.getElementById("waterDoel").value = SET.waterDoel;
+  document.getElementById("proxyUrl").value = SET.proxyUrl;
+  document.getElementById("apiKey").value = SET.apiKey;
+  document.getElementById("model").value = SET.model;
+
+  renderVandaag();
+  renderEten();
+  if(!sessie) renderTraining();
+  if(curTab==="Voortgang") renderVoortgang();
+}
+
+/* ---------- TRAINING: sessie ---------- */
+function parseSet(t){
+  t = String(t).trim().toLowerCase().replace(",", ".");
+  let m = t.match(/^(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+)$/); if(m) return {kg:+m[1], reps:+m[2]};
+  m = t.match(/^(\d+(?:\.\d+)?)\s*s$/); if(m) return {sec:+m[1]};
+  m = t.match(/^(\d+(?:\.\d+)?)$/); if(m) return {kg:+m[1], reps:null};
+  return null;
+}
+function setTekst(s){ return s.sec!==undefined ? s.sec+"s" : fmtKg(s.kg)+"×"+(s.reps===null?"?":s.reps); }
+function vorigeSessie(naam){
+  const vandaag = vandaagISO();
+  const isos = Object.keys(WKL).filter(iso=>iso<=vandaag && WKL[iso].oef.some(o=>o.n===naam && o.sets.length)).sort();
+  if(!isos.length) return null;
+  const o = WKL[isos[isos.length-1]].oef.find(o=>o.n===naam);
+  return {iso:isos[isos.length-1], sets:o.sets};
+}
+function minReps(r){ const m = r.match(/(\d+)/); return m?+m[1]:0; }
+function maxReps(r){ const m = r.match(/(\d+)\s*[–-]\s*(\d+)/); return m?+m[2]:minReps(r); }
+function suggestieTekst(def, vorige, week){
+  if(week===7) return "deload: halveer je gewichten";
+  if(!vorige) return (def.main && week<=2) ? "terugkomen: begin licht (bank ±50 kg)" : null;
+  const kgSets = vorige.sets.filter(s=>s.reps>0);
+  if(!kgSets.length) return null;
+  const doel = minReps(def.reps), top = maxReps(def.reps);
+  const compleet = kgSets.length>=def.sets;
+  if(def.main && compleet && kgSets.every(s=>s.reps>=doel)){
+    const hoogst = Math.max(...kgSets.map(s=>s.kg));
+    return "▲ alle sets gehaald — volgende keer "+fmtKg(hoogst+2.5)+" kg";
+  }
+  if(!def.main && !def.tijd){
+    if(compleet && kgSets.every(s=>s.reps>=top)) return "▲ top-reps gehaald — verhoog je gewicht";
+    if(kgSets.some(s=>s.reps<top)) return "reps richting "+top+", dan gewicht omhoog";
+  }
+  return null;
+}
+function startSessie(type){
+  initAudio();
+  sessie = {type:type, start:Date.now(), oef: PLAN[type].map(o=>({n:o.n, sets:[], notitie:""}))};
+  document.getElementById("rustBalk").style.display = "none";
+  renderTraining();
+  toast("🏋️ "+type+" gestart — log je eerste set!");
+}
+function slaSetOp(i){
+  const veld = document.getElementById("setIn"+i);
+  const s = parseSet(veld.value);
+  if(!s){ toast("Formaat: 50x5 of 45s"); return; }
+  if(s.sec===undefined && s.reps===null){ toast("Voeg reps toe: 50x5"); return; }
+  sessie.oef[i].sets.push(s);
+  veld.value = ""; veld.focus();
+  renderOefRij(i);
+  const def = PLAN[sessie.type][i];
+  if(def.rust) startRust(def.rust);
+}
+function verwijderSet(i,j){
+  sessie.oef[i].sets.splice(j,1);
+  renderOefRij(i);
+}
+function renderOefRij(i){
+  const def = PLAN[sessie.type][i];
+  const chips = sessie.oef[i].sets.map((s,j)=>'<button class="set-chip" onclick="verwijderSet('+i+','+j+')">'+setTekst(s)+'</button>').join("");
+  document.getElementById("sets"+i).innerHTML = chips +
+    '<span class="klein" style="align-self:center">'+sessie.oef[i].sets.length+'/'+def.sets+' sets</span>';
+}
+function sessieDuurTxt(){
+  return Math.floor((Date.now()-sessie.start)/60000);
+}
+function eindSessie(){
+  if(!sessie) return;
+  const tel = sessie.oef.reduce((s,o)=>s+o.sets.length,0);
+  if(!tel){ if(!confirm("Geen sets gelogd — training vergeten op te slaan?")) return; }
+  const iso = vandaagISO();
+  if(WKL[iso] && !confirm("Er staat al een training van vandaag — overschrijven?")) return;
+  const nu = new Date();
+  const startStr = new Date(sessie.start).toTimeString().slice(0,5);
+  WKL[iso] = {type:sessie.type, start:startStr, eind:nu.toTimeString().slice(0,5),
+    duur:Math.max(1,Math.round((Date.now()-sessie.start)/60000)), oef:sessie.oef};
+  bewaarWk();
+  sessie = null;
+  rustStop();
+  render();
+  toast("🏁 Training opgeslagen — exporteer hem naar Obsidian");
+}
+function exportTraining(iso){
+  const w = WKL[iso]; if(!w){ toast("Geen training op "+iso); return; }
+  let t = "---\ntags:\n  - workout\nfocus: "+w.type+"\nduration: "+w.duur+"\n---\n\n"+
+    "# Workout — "+iso+"\n\n## Warm-up\n\n- [ ] \n\n## Exercises\n\n"+
+    "| Exercise | Set 1 | Set 2 | Set 3 | Set 4 | Notes |\n"+
+    "| -------- | ----- | ----- | ----- | ----- | ----- |\n";
+  w.oef.forEach(o=>{
+    if(!o.sets.length) return;
+    const cells = [1,2,3,4].map(i=>{
+      const s = o.sets[i-1];
+      if(!s) return "";
+      return s.sec!==undefined ? s.sec+"s" : fmtKg(s.kg)+"kg x "+(s.reps===null?"?":s.reps);
+    });
+    t += "| "+o.n+" | "+cells.join(" | ")+" | "+(o.notitie||"")+" |\n";
+    if(o.sets.length>4) t = t.replace(/\|\n$/, " | extra: "+o.sets.slice(4).map(setTekst).join(", ")+" |\n");
+  });
+  t += "\n## Finish\n\n- [ ] Stretch\n- [ ] Log weight in [[Weight]]\n";
+  kopieer(t, "📋 Workout-notitie gekopieerd — plak in Workouts als 'Workout "+iso+".md'");
+}
+function renderTraining(){
+  const iso = vandaagISO();
+  const w = weekNum(iso);
+  const type = typeVandaag(iso);
+
+  // 12-weekschema
+  let html = '<h3>📅 12-weekschema</h3><table class="schema"><tr><th>Wk</th><th>ma</th><th>di</th><th>wo</th><th>do</th><th>vr</th></tr>';
+  for(let i=1;i<=12;i++){
+    html += '<tr'+(w===i?' class="huidig"':'')+'><td>'+i+(i===7?' ⬇':'')+'</td><td>Upper A</td><td>Lower A</td><td>Cardio</td><td>Upper B</td><td>Lower B</td></tr>';
+  }
+  html += '</table><p class="klein" style="padding-top:6px">Week 7 = deload (halve gewichten) bij pijn of 2 slechte weken. Za/zo rust.</p>';
+  document.getElementById("schemaKaart").innerHTML = html;
+
+  // sessiekaart
+  const sk = document.getElementById("sessieKaart");
+  if(sessie){
+    let s = '<div class="rij-tuss" style="margin:0"><b>'+sessie.type+'</b><span class="klein" id="sessieDuur">'+sessieDuurTxt()+' min bezig</span></div>';
+    s += '<p class="oef-sub klein">Tip: vul per set "50x5" (of "45s" bij planks) — de rust-timer start vanzelf. Tik een set aan om hem te verwijderen.</p>';
+    s += '<button class="aiknop" style="background:#173226;border-color:#2b5a3f;color:var(--groen)" onclick="eindSessie()">🏁 Training afronden</button>';
+    PLAN[sessie.type].forEach((def,i)=>{
+      const vorige = vorigeSessie(def.n);
+      const sugg = suggestieTekst(def, vorige, w);
+      s += '<div class="oef"><div class="oef-hoofd"><b>'+def.n+'</b><span class="oef-doel">'+def.sets+'×'+def.reps+' · rust '+fmtTijd(def.rust)+'</span></div>';
+      if(vorige) s += '<p class="oef-sub klein">vorige ('+vorige.iso+'): '+vorige.sets.map(setTekst).join(", ")+'</p>';
+      if(sugg) s += '<p class="oef-sub '+(sugg.startsWith("▲")?"goed":"hint")+'">'+sugg+'</p>';
+      if(def.alt) s += '<p class="oef-sub klein">⚠ '+def.alt+'</p>';
+      s += '<div class="sets" id="sets'+i+'"></div>';
+      s += '<div class="set-invoer"><input id="setIn'+i+'" placeholder="'+(def.tijd?"bv. 45s":"bv. 50x5")+'" autocomplete="off">'+
+        '<button class="mini-knop" onclick="slaSetOp('+i+')">✓</button></div></div>';
+    });
+    sk.innerHTML = s;
+    PLAN[sessie.type].forEach((def,i)=>renderOefRij(i));
+  } else if(WKL[iso]){
+    const wkl = WKL[iso];
+    let s = '<div class="rij-tuss" style="margin:0"><b>✅ Vandaag getraind</b><span class="klein">'+wkl.type+' · '+wkl.duur+' min</span></div>';
+    wkl.oef.forEach(o=>{ if(o.sets.length) s += '<div class="gevonden"><span>'+o.n+'</span><span>'+o.sets.map(setTekst).join(", ")+'</span></div>'; });
+    s += '<button class="aiknop" onclick="exportTraining(\''+iso+'\')">📋 Exporteer naar Obsidian</button>';
+    s += '<p class="klein" style="padding-top:6px">Nog een keer? <button class="mini-knop" onclick="renderTrainingHerstart()">▶ Start nieuwe sessie</button></p>';
+    sk.innerHTML = s;
+  } else {
+    let s = '<h3>'+DAGNAAM[new Date().getDay()]+' — '+TYPETEKST[type]+'</h3>';
+    if(PLAN[type]){
+      s += '<button class="hoofdknop" style="width:100%;margin-top:8px" onclick="startSessie(\''+type+'\')">▶ Start '+type+'</button>';
+    } else {
+      s += '<p class="klein">Vandaag geen training gepland — 8.000+ stappen 🚶</p>';
+    }
+    s += '<p class="klein" style="padding-top:8px">Of start handmatig:</p><div class="chips">';
+    Object.keys(PLAN).forEach(tp=>{ s += '<button class="chip" onclick="startSessie(\''+tp+'\')">'+tp+'</button>'; });
+    s += '</div>';
+    sk.innerHTML = s;
+  }
+}
+function renderTrainingHerstart(){
+  if(WKL[vandaagISO()] && !confirm("Je training van vandaag wordt dan overschreven bij afronden. Doorgaan?")) return;
+  const type = typeVandaag(vandaagISO());
+  startSessie(PLAN[type]?type:"Upper A");
+}
+
+/* ---------- rust-timer ---------- */
+let rust = null, rustId = null, audioCtx = null;
+function initAudio(){ try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function piep(){ try{
+  initAudio(); if(!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.frequency.value = 880; o.type = "sine"; o.connect(g); g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.6);
+  o.start(); o.stop(audioCtx.currentTime+0.6);
+}catch(e){} }
+function tril(){ if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+function startRust(sec){
+  rust = {eind:Date.now()+sec*1000, tot:sec};
+  document.getElementById("rustBalk").style.display = "";
+  clearInterval(rustId);
+  tikRust(); rustId = setInterval(tikRust, 250);
+}
+function tikRust(){
+  if(!rust) return;
+  const rest = Math.max(0, Math.ceil((rust.eind-Date.now())/1000));
+  document.getElementById("rustTijd").textContent = fmtTijd(rest);
+  document.getElementById("rustFill").style.width = (100*rest/rust.tot)+"%";
+  if(rest<=0){ clearInterval(rustId); rustId = null; piep(); tril(); toast("⏱ Klaar met rusten — volgende set!"); }
+}
+function rustExtra(sec){ if(rust){ rust.eind += sec*1000; rust.tot += sec; tikRust(); } }
+function rustStop(){ rust = null; clearInterval(rustId); rustId = null; document.getElementById("rustBalk").style.display = "none"; }
+setInterval(()=>{ const el = document.getElementById("sessieDuur"); if(el && sessie) el.textContent = sessieDuurTxt()+" min bezig"; }, 30000);
+
+/* ---------- VOORTGANG: charts (inline SVG, single-series) ---------- */
+function svgLijn(punten, eenheid, minSpan, chartKey){
+  if(punten.length<2) return '<p class="klein">Log minimaal 2 metingen om de grafiek te zien.</p>';
+  const W=480, H=170, ML=38, MR=56, MT=14, MB=24;
+  let ys = punten.map(p=>p.y), lo = Math.min(...ys), hi = Math.max(...ys);
+  if(minSpan && hi-lo < minSpan){ const m=(hi+lo)/2; lo=m-minSpan/2; hi=m+minSpan/2; }
+  const pad = (hi-lo)*0.08 || 1; lo -= pad; hi += pad;
+  const X = i => ML+(W-ML-MR)*i/(punten.length-1), Y = v => MT+(H-MT-MB)*(1-(v-lo)/(hi-lo));
+  const dec = eenheid==="kg" ? 1 : 0;
+  let s = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+  [lo+pad, (lo+hi)/2, hi-pad].forEach(v=>{
+    const gv = dec ? (Math.round(v*10)/10).toFixed(1) : Math.round(v);
+    s += '<line x1="'+ML+'" y1="'+Y(v)+'" x2="'+(W-MR)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="1"/>'+
+      '<text x="'+(ML-6)+'" y="'+(Y(v)+3)+'" text-anchor="end" font-size="10" fill="var(--grijs)">'+gv+'</text>';
+  });
+  s += '<path d="M '+punten.map((p,i)=>X(i)+" "+Y(p.y)).join(" L ")+'" fill="none" stroke="var(--blauw)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  punten.forEach((p,i)=>{
+    s += '<circle cx="'+X(i)+'" cy="'+Y(p.y)+'" r="4" fill="var(--blauw)"/>'+
+      '<circle cx="'+X(i)+'" cy="'+Y(p.y)+'" r="14" fill="transparent" onclick="puntInfo(\''+chartKey+'\','+i+')"/>';
+  });
+  const l = punten[punten.length-1];
+  s += '<text x="'+(X(punten.length-1)+8)+'" y="'+(Y(l.y)+3)+'" font-size="11" font-weight="700" fill="var(--tekst)">'+
+    (dec?(Math.round(l.y*10)/10).toFixed(1):fmt(l.y))+' '+eenheid+'</text>';
+  s += '<text x="'+ML+'" y="'+(H-6)+'" font-size="10" fill="var(--grijs)">'+esc(punten[0].x)+'</text>'+
+    '<text x="'+(W-MR)+'" y="'+(H-6)+'" text-anchor="end" font-size="10" fill="var(--grijs)">'+esc(l.x)+'</text>';
+  return s+'</svg>';
+}
+function svgBalk(items, eenheid, chartKey){
+  if(!items.length) return '<p class="klein">Nog geen trainingsdata.</p>';
+  const W=480, H=170, ML=38, MR=10, MT=14, MB=24;
+  const hi = Math.max(...items.map(i=>i.y))*1.1 || 1;
+  const n = items.length, stap = (W-ML-MR)/n, bw = Math.min(46, stap*0.62);
+  let s = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+  [hi/2, hi].forEach(v=>{
+    s += '<line x1="'+ML+'" y1="'+(MT+(H-MT-MB)*(1-v/hi))+'" x2="'+(W-MR)+'" y2="'+(MT+(H-MT-MB)*(1-v/hi))+'" stroke="var(--line)" stroke-width="1"/>';
+  });
+  items.forEach((it,i)=>{
+    const x = ML+stap*i+(stap-bw)/2, y = MT+(H-MT-MB)*(1-it.y/hi), bh = (H-MB)-y;
+    s += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="var(--blauw)" onclick="puntInfo(\''+chartKey+'\','+i+')"/>'+
+      '<text x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" fill="var(--grijs)">'+esc(it.x)+'</text>';
+  });
+  const topIdx = items.reduce((b,i,idx)=>items[idx].y>items[b].y?idx:b, 0);
+  const top = items[topIdx];
+  s += '<text x="'+(ML+stap*topIdx+stap/2)+'" y="'+(MT+(H-MT-MB)*(1-top.y/hi)-6)+'" text-anchor="middle" font-size="11" font-weight="700" fill="var(--tekst)">'+fmt(top.y)+'</text>';
+  return s+'</svg>';
+}
+const CHART_DATA = {};
+function puntInfo(key, i){
+  const p = CHART_DATA[key] && CHART_DATA[key][i]; if(!p) return;
+  document.getElementById(key.charAt(0).toUpperCase()+key.slice(1).replace(/Lift|Volume|Gewicht/, m=>m)).textContent = p.txt;
+}
+function renderVoortgang(){
+  // gewicht
+  const gIso = Object.keys(GEWICHT).sort();
+  const gPunten = gIso.map(iso=>({x:iso.slice(5), y:GEWICHT[iso].kg, txt:iso+": "+fmtKg(GEWICHT[iso].kg)+" kg"}));
+  CHART_DATA.gewicht = gPunten;
+  document.getElementById("chartGewicht").innerHTML = svgLijn(gPunten, "kg", 2, "gewicht");
+  document.getElementById("infoGewicht").textContent = gPunten.length ? gPunten[gPunten.length-1].txt : "";
+
+  // lift-chips
+  document.getElementById("liftChips").innerHTML = ["Bankdrukken","Back squat","Deadlift"].map(n=>
+    '<button class="chip '+(topsetKeuze===n?"actief":"")+'" onclick="kiesLift(\''+n+'\')">'+n+'</button>').join("");
+  const lPunten = Object.keys(WKL).sort().flatMap(iso=>{
+    const o = WKL[iso].oef.find(o=>o.n===topsetKeuze);
+    if(!o || !o.sets.length) return [];
+    const kgSets = o.sets.filter(s=>s.kg && s.reps);
+    if(!kgSets.length) return [];
+    const hoogst = Math.max(...kgSets.map(s=>s.kg));
+    return [{x:iso.slice(5), y:hoogst, txt:iso+": "+fmtKg(hoogst)+" kg ("+topsetKeuze+")"}];
+  });
+  CHART_DATA.lift = lPunten;
+  document.getElementById("chartLift").innerHTML = svgLijn(lPunten, "kg", 10, "lift");
+  document.getElementById("infoLift").textContent = lPunten.length ? lPunten[lPunten.length-1].txt : "";
+
+  // weekvolume
+  const w = weekNum(vandaagISO());
+  let vItems = [];
+  for(let i=Math.max(1,w-7);i<=Math.max(1,w);i++){
+    let vol = 0;
+    Object.keys(WKL).forEach(iso=>{
+      if(weekNum(iso)!==i) return;
+      WKL[iso].oef.forEach(o=>o.sets.forEach(s=>{ if(s.kg && s.reps) vol += s.kg*s.reps; }));
+    });
+    if(vol) vItems.push({x:"W"+i, y:Math.round(vol), txt:"Week "+i+": "+fmt(vol)+" kg volume"});
+  }
+  CHART_DATA.volume = vItems;
+  document.getElementById("chartVolume").innerHTML = svgBalk(vItems, "kg", "volume");
+  document.getElementById("infoVolume").textContent = vItems.length ? vItems[vItems.length-1].txt : "";
+
+  // PR's (Epley 1RM)
+  const pr = {};
+  Object.keys(WKL).forEach(iso=>{
+    WKL[iso].oef.forEach(o=>o.sets.forEach(s=>{
+      if(!s.kg || !s.reps) return;
+      const e = s.kg*(1+s.reps/30);
+      if(!pr[o.n] || e>pr[o.n].e) pr[o.n] = {e, kg:s.kg, reps:s.reps, iso};
+    }));
+  });
+  const lijst = Object.keys(pr).sort((a,b)=>pr[b].e-pr[a].e);
+  document.getElementById("prLijst").innerHTML = lijst.length ? lijst.map(n=>
+    '<div class="gevonden"><span>'+n+' <span class="klein">('+pr[n].iso+')</span></span><span><b>'+fmtKg(pr[n].kg)+' kg × '+pr[n].reps+'</b> <span class="klein">1RM ≈ '+fmtKg(pr[n].e)+' kg</span></span></div>').join("")
+    : '<p class="klein">Nog geen PR\'s — log je eerste training!</p>';
+}
+function kiesLift(n){ topsetKeuze = n; renderVoortgang(); }
 
 /* ---------- AI via Ollama Cloud (door Cloudflare Worker vanwege CORS) ---------- */
 async function ollamaChat(berichten){
@@ -325,9 +930,9 @@ async function viaAI(){
     items.forEach(it=>{
       const kcal = Math.round(it.kcal||0), ei = Math.round((it.eiwit||0)*10)/10;
       if(!it.naam) return;
-      LOG[bekijkDag].push({naam: it.naam, gram: it.gram||0, kcal, eiwit: ei, src:"Ai"});
+      LOG[bekijkDag].push({naam: it.naam, gram: it.gram||0, kcal, eiwit: ei, src:"Ai", maal:maaltijd});
       totK += kcal; totP += ei;
-      html += '<div class="gevonden"><span>'+it.naam+' <span class="klein">· AI</span></span><span><b>'+kcal+' kcal</b> · '+ei+' g ei</span></div>';
+      html += '<div class="gevonden"><span>'+MAAL_EMOJI[maaltijd]+' '+esc(it.naam)+' <span class="klein">· AI</span></span><span><b>'+kcal+' kcal</b> · '+ei+' g ei</span></div>';
     });
     html += '<div class="totaal-rij"><span>AI-totaal</span><span>'+fmt(totK)+' kcal · '+Math.round(totP*10)/10+' g ei</span></div>';
     document.getElementById("resultaat").innerHTML = html;
@@ -335,7 +940,7 @@ async function viaAI(){
     document.getElementById("eten").value = "";
     toast("🤖 AI toegevoegd"); render();
   }catch(e){
-    document.getElementById("resultaat").innerHTML = '<p class="fout">AI-fout: '+e.message+'</p>';
+    document.getElementById("resultaat").innerHTML = '<p class="fout">AI-fout: '+esc(e.message)+'</p>';
   }
 }
 async function testAI(){
@@ -352,29 +957,64 @@ async function testAI(){
   }catch(e){ s.textContent = "⚠️ " + e.message; }
 }
 
-/* ---------- export / misc ---------- */
-function exporteer(){
-  const iso = dagISO(0), rijen = LOG[iso] || [];
-  if(!rijen.length){ toast("Nog niks gelogd vandaag"); return; }
-  const k = rijen.reduce((s,r)=>s+r.kcal,0), p = rijen.reduce((s,r)=>s+r.eiwit,0);
-  const t = iso + " — " + fmt(k) + " / " + fmt(doelVandaag(iso)) + " kcal · " + fmt(p) + " / " + SET.doelEiwit +
-    " g eiwit\n" + rijen.map(r=>"- "+r.naam+" ("+r.gram+" g): "+r.kcal+" kcal, "+r.eiwit+" g eiwit").join("\n");
-  navigator.clipboard.writeText(t).then(()=>toast("📋 Gekopieerd — plak in je Obsidian Food Log"), ()=>toast("Kopiëren mislukt"));
+/* ---------- export / backup / misc ---------- */
+function kopieer(t, melding){
+  navigator.clipboard.writeText(t).then(()=>toast(melding), ()=>toast("Kopiëren mislukt"));
 }
-function vandaagISO(){ return dagISO(0); }
+function exporteer(){
+  const iso = bekijkDag, rijen = LOG[iso] || [];
+  if(!rijen.length){ toast("Nog niks gelogd op deze dag"); return; }
+  const k = rijen.reduce((s,r)=>s+r.kcal,0), p = rijen.reduce((s,r)=>s+r.eiwit,0);
+  let t = "| Date | Meal | Food | kcal | Protein (g) |\n| ---- | ---- | ---- | ---- | ----------- |\n";
+  rijen.forEach(r=>{
+    t += "| "+iso+" | "+(r.maal?r.maal[0].toUpperCase()+r.maal.slice(1):"—")+" | "+r.naam+" ("+r.gram+" g) | "+r.kcal+" | "+String(r.eiwit).replace(".",",")+" |\n";
+  });
+  t += "\nTotaal "+iso+": "+fmt(k)+" / "+fmt(doelVandaag(iso))+" kcal · "+String(Math.round(p*10)/10).replace(".",",")+" / "+SET.doelEiwit+" g eiwit";
+  kopieer(t, "📋 Food Log-rijen gekopieerd — plak in je Obsidian Food Log");
+}
+function exportGewicht(){
+  const iso = vandaagISO(), g = GEWICHT[iso];
+  if(!g){ toast("Weeg jezelf eerst 😉"); return; }
+  kopieer("| "+iso+" | "+fmtKg(g.kg)+" | "+(g.taille||"")+" | "+(g.notitie||"")+" |",
+    "📋 Weight.md-rij gekopieerd — plak onderaan Weight.md");
+}
+function backupJSON(){
+  const data = {eten_set:SET, eten_log:LOG, gewicht_log:GEWICHT, dag_log:DAGL, wk_log:WKL};
+  const blob = new Blob([JSON.stringify(data, null, 1)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "fit-backup-"+vandaagISO()+".json"; a.click();
+  toast("⬇️ Backup gedownload");
+}
+document.getElementById("herstelFile").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const d = JSON.parse(fr.result);
+      ["eten_set","eten_log","gewicht_log","dag_log","wk_log"].forEach(k=>{
+        if(d[k]!==undefined) localStorage.setItem(k, JSON.stringify(d[k]));
+      });
+      if(!confirm("Backup hersteld — herladen om te activeren?")) return;
+      location.reload();
+    }catch(err){ toast("Ongeldig backup-bestand"); }
+  };
+  fr.readAsText(f);
+});
 function toast(m){ const el = document.getElementById("toast");
   el.textContent = m; el.classList.add("zichtbaar"); setTimeout(()=>el.classList.remove("zichtbaar"), 2200); }
 
+/* ---------- listeners ---------- */
+document.querySelectorAll(".tabknop").forEach(b=>b.addEventListener("click", ()=>wisselTab(b.dataset.tab)));
 document.getElementById("eten").addEventListener("keydown", e=>{ if(e.key==="Enter") toevoegen(); });
 document.getElementById("aiKnop").addEventListener("click", viaAI);
-["doelKcalT","doelKcalR","doelEiwit","proxyUrl","apiKey","model"].forEach(id=>{
+["doelKcalT","doelKcalR","doelEiwit","stappenDoel","waterDoel","proxyUrl","apiKey","model"].forEach(id=>{
   document.getElementById(id).addEventListener("change", e=>{
     const v = e.target.value.trim();
-    SET[id] = ["doelKcalT","doelKcalR","doelEiwit"].includes(id) ? (parseInt(v)||SET[id]) : v;
+    SET[id] = ["doelKcalT","doelKcalR","doelEiwit","stappenDoel","waterDoel"].includes(id) ? (parseFloat(v)||SET[id]) : v;
     bewaar(); render();
   });
 });
-render();
+wisselTab("Vandaag");
 </script>
 </body>
 </html>
