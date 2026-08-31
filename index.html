@@ -81,10 +81,25 @@
   .check { background:none; border:1px solid var(--line); color:var(--grijs); border-radius:10px; padding:8px 12px; font-size:13px; }
   .check.aan { color:var(--groen); border-color:var(--groen); }
   /* schema + charts */
-  .schema { width:100%; border-collapse:collapse; font-size:12px; }
-  .schema th, .schema td { padding:4px 6px; border-bottom:1px solid var(--line); text-align:left; color:var(--grijs); }
-  .schema td:first-child { color:var(--tekst); }
-  .schema tr.huidig td { color:var(--blauw); font-weight:700; }
+  .schema { width:100%; border-collapse:separate; border-spacing:0 3px; font-size:12px; }
+  .schema th { padding:2px 6px; text-align:left; color:var(--grijs); font-size:10px; text-transform:uppercase; letter-spacing:.5px; }
+  .schema td { padding:5px 6px; text-align:left; background:#232b37; color:var(--grijs); }
+  .schema td:first-child { border-radius:8px 0 0 8px; color:var(--tekst); font-weight:600; }
+  .schema td:last-child { border-radius:0 8px 8px 0; }
+  .schema tr.verleden td { opacity:.55; }
+  .schema tr.huidig td { background:rgba(249,115,22,.16); color:var(--oranje); font-weight:700; }
+  .schema tr.huidig td:first-child { border-left:3px solid var(--oranje); }
+  .badge { background:rgba(249,115,22,.13); color:var(--oranje); border-radius:8px; padding:3px 9px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .training-hero { text-align:center; padding:4px 0 2px; }
+  .training-hero .groot { font-size:30px; margin:2px 0 0; }
+  .progbalk { height:8px; background:#232b37; border-radius:4px; overflow:hidden; margin:8px 0 2px; }
+  .progbalk .fill { height:100%; background:linear-gradient(90deg,var(--oranje),#fb8a33); border-radius:4px; transition:width .5s ease; }
+  /* AI-coach */
+  .coachknop { width:100%; margin-top:10px; background:rgba(249,115,22,.1); border:1px solid rgba(249,115,22,.45); color:var(--oranje); border-radius:12px; padding:11px 12px; font-size:14px; font-weight:600; }
+  .coach-kader { animation:tabIn .3s ease-out; background:#1d2430; border:1px solid rgba(249,115,22,.35); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .coach-tekst { font-size:14px; line-height:1.55; white-space:pre-wrap; }
+  .oef-nr { display:inline-flex; width:20px; height:20px; border-radius:6px; background:rgba(249,115,22,.15); color:var(--oranje); font-size:11px; font-weight:700; align-items:center; justify-content:center; margin-right:8px; flex:0 0 auto; }
+  .oef-titel { display:flex; align-items:center; }
   .chart { width:100%; }
   .chartinfo { font-size:12px; color:var(--grijs); padding-top:4px; min-height:15px; }
   .weekstrip { display:flex; gap:4px; margin-top:8px; }
@@ -736,9 +751,12 @@ function renderTraining(){
   const type = typeVandaag(iso);
 
   // 12-weekschema
-  let html = '<h3>📅 12-Week Plan</h3><table class="schema"><tr><th>Wk</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>';
+  let html = '<div class="rij-tuss" style="margin:0"><h3 style="margin:0">📅 12-Week Plan</h3><span class="badge">Week '+w+'/12</span></div>'+
+    '<div class="progbalk"><div class="fill" style="width:'+Math.round(w/12*100)+'%"></div></div>'+
+    '<p class="klein" style="padding:2px 0 8px">'+faseTekst(w)+'</p>';
+  html += '<table class="schema"><tr><th>Wk</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>';
   for(let i=1;i<=12;i++){
-    html += '<tr'+(w===i?' class="huidig"':'')+'><td>'+i+(i===7?' ⬇':'')+'</td><td>Upper A</td><td>Lower A</td><td>Cardio</td><td>Upper B</td><td>Lower B</td></tr>';
+    html += '<tr class="'+(w===i?'huidig':i<w?'verleden':'')+(i===7?' deload':'')+'"><td>'+i+'</td><td>Upper A</td><td>Lower A</td><td>Cardio</td><td>Upper B</td><td>Lower B</td></tr>';
   }
   html += '</table><p class="klein" style="padding-top:6px">Week 7 = deload: cut weights in half if pain or 2 bad weeks. Sat/Sun rest.</p>';
   document.getElementById("schemaKaart").innerHTML = html;
@@ -746,13 +764,17 @@ function renderTraining(){
   // sessiekaart
   const sk = document.getElementById("sessieKaart");
   if(sessie){
+    const totSet = PLAN[sessie.type].reduce((t,d)=>t+d.sets,0);
+    const klaarSet = sessie.oef.reduce((t,o)=>t+o.sets.length,0);
     let s = '<div class="rij-tuss" style="margin:0"><b>'+sessie.type+'</b><span class="klein" id="sessieDuur">'+sessieDuurTxt()+' min in</span></div>';
-    s += '<p class="oef-sub klein">Log each set as "50x5" (or "45s" for planks) — the rest timer starts automatically. Tap a set to remove it.</p>';
+    s += '<div class="progbalk"><div class="fill" style="width:'+Math.round(100*klaarSet/totSet)+'%"></div></div>';
+    s += '<p class="oef-sub klein" style="padding-top:4px">'+klaarSet+'/'+totSet+' sets · log each as "50x5" (or "45s" for planks) — rest timer starts automatically. Tap a set to remove it.</p>';
+    s += coachBlok("actief");
     s += '<button class="aiknop" style="background:#173226;border-color:#2b5a3f;color:var(--groen)" onclick="eindSessie()">🏁 Finish workout</button>';
     PLAN[sessie.type].forEach((def,i)=>{
       const vorige = vorigeSessie(def.n);
       const sugg = suggestieTekst(def, vorige, w);
-      s += '<div class="oef"><div class="oef-hoofd"><b>'+def.n+'</b><span class="oef-doel">'+def.sets+'×'+def.reps+' · rest '+fmtTijd(def.rust)+'</span></div>';
+      s += '<div class="oef"><div class="oef-hoofd"><div class="oef-titel"><span class="oef-nr">'+(i+1)+'</span><b>'+def.n+'</b></div><span class="oef-doel">'+def.sets+'×'+def.reps+' · rest '+fmtTijd(def.rust)+'</span></div>';
       if(vorige) s += '<p class="oef-sub klein">last ('+vorige.iso+'): '+vorige.sets.map(setTekst).join(", ")+'</p>';
       if(sugg) s += '<p class="oef-sub '+(sugg.startsWith("▲")?"goed":"hint")+'">'+sugg+'</p>';
       if(def.alt) s += '<p class="oef-sub klein">⚠ '+def.alt+'</p>';
@@ -767,10 +789,13 @@ function renderTraining(){
     let s = '<div class="rij-tuss" style="margin:0"><b>✅ Workout done</b><span class="klein">'+wkl.type+' · '+wkl.duur+' min</span></div>';
     wkl.oef.forEach(o=>{ if(o.sets.length) s += '<div class="gevonden"><span>'+o.n+'</span><span>'+o.sets.map(setTekst).join(", ")+'</span></div>'; });
     s += '<button class="aiknop" onclick="exportTraining(\''+iso+'\')">📋 Export to Obsidian</button>';
+    s += coachBlok("klaar");
     s += '<p class="klein" style="padding-top:6px">Session again? <button class="mini-knop" onclick="renderTrainingHerstart()">▶ Start new session</button></p>';
     sk.innerHTML = s;
   } else {
-    let s = '<h3>'+DAGNAAM[new Date().getDay()]+' — '+TYPETEKST[type]+'</h3>';
+    const naamSub = TYPETEKST[type].split(" — ");
+    let s = '<div class="training-hero"><div class="groot">'+esc(naamSub[0])+'</div>'+
+      '<p class="klein" style="margin:2px 0 0">'+DAGNAAM[new Date().getDay()]+' · week '+w+' of 12'+(naamSub[1]?' · '+esc(naamSub[1]):'')+'</p></div>';
     if(PLAN[type]){
       s += '<button class="hoofdknop" style="width:100%;margin-top:8px" onclick="startSessie(\''+type+'\')">▶ Start '+type+'</button>';
     } else {
@@ -779,6 +804,7 @@ function renderTraining(){
     s += '<p class="klein" style="padding-top:8px">Or start manually:</p><div class="chips">';
     Object.keys(PLAN).forEach(tp=>{ s += '<button class="chip" onclick="startSessie(\''+tp+'\')">'+tp+'</button>'; });
     s += '</div>';
+    s += coachBlok("plan");
     sk.innerHTML = s;
   }
 }
@@ -786,6 +812,54 @@ function renderTrainingHerstart(){
   if(WKL[vandaagISO()] && !confirm("A second workout today will overwrite the first one when you finish. Continue?")) return;
   const type = typeVandaag(vandaagISO());
   startSessie(PLAN[type]?type:"Upper A");
+}
+
+/* ---------- AI-coach: feedback op je training ---------- */
+const COACH_LBL = {plan:"🤖 Plan my session", actief:"🤖 How am I doing?", klaar:"🤖 Coach feedback"};
+const COACH_SYSTEEM = "You are Mustafa's strength coach for his 12-week upper/lower recomp program (bench / squat / deadlift + accessories, week 7 = deload). You get his workout history in the message. Reply in ENGLISH only, max 4 short plain sentences, no markdown, no bullets, no greeting. Be direct and practical, like a coach on the gym floor. ALWAYS give concrete numbers based on HIS logged sets, never invented: e.g. \"Last time 50×5×4 — go 52.5 kg for 4×5 today.\" Rules: all target reps done on a main lift → prescribe +2.5 kg (upper) or +5 kg (lower) next time; all top-of-range reps on an accessory → slightly heavier; missed target reps or reps dropping off per set → keep the weight or drop ~5% and rebuild; same weight for 3+ sessions with missed reps → step back 10% first; new PR → congratulate in max 3 words; clearly weaker than usual (stress, sleep, form breaking down) → tell him to lower the weight and focus on clean reps. Only comment on exercises and numbers that appear in the data.";
+let coachData = {};
+function coachBlok(mode){
+  const waarde = coachData[mode];
+  if(waarde === "laden") return '<div class="coach-kader"><p class="klein" style="animation:tabIn .3s">🤖 Coach denkt na…</p></div>';
+  if(typeof waarde === "string"){
+    const fout = waarde.startsWith("⚠️");
+    return '<div class="coach-kader">'+(fout?'<p class="fout" style="margin:0">'+esc(waarde)+'</p>':
+      '<div class="coach-tekst">💪 '+esc(waarde)+'</div>')+
+      '<button class="mini-knop" style="margin-top:8px" onclick="aiCoach(\''+mode+'\')">↻ Ask again</button></div>';
+  }
+  return '<button class="coachknop" onclick="aiCoach(\''+mode+'\')">'+COACH_LBL[mode]+'</button>';
+}
+async function aiCoach(mode){
+  if(!SET.apiKey || !SET.proxyUrl){ toast("⚙️ First: ⚙️ Meer → Worker-URL + Ollama API-sleutel"); wisselTab("Inst"); return; }
+  coachData[mode] = "laden";
+  renderTraining();
+  const iso = vandaagISO(), w = weekNum(iso), type = typeVandaag(iso);
+  const hist = Object.keys(WKL).sort().slice(-8).map(k=>{
+    const wk = WKL[k];
+    const deeltjes = wk.oef.filter(o=>o.sets.length).map(o=>o.n+": "+o.sets.map(setTekst).join("/")).join(" | ");
+    return k+" "+wk.type+": "+deeltjes;
+  }).join("\n") || "(no workouts logged yet — this is his first session)";
+  let vraag = "Week "+w+" of 12 ("+faseTekst(w)+"). Workout history, oldest first:\n"+hist+"\n\n";
+  if(mode==="actief" && sessie){
+    const nu = sessie.oef.filter(o=>o.sets.length).map(o=>o.n+": "+o.sets.map(setTekst).join("/")).join(" | ") || "nothing logged yet";
+    vraag += "Right now he is doing "+sessie.type+". Sets logged so far: "+nu+". Give in-the-moment feedback: is he on track versus last time, what weight to take on the remaining exercises, and keep it encouraging.";
+  } else if(mode==="klaar" && WKL[iso]){
+    const wkl = WKL[iso];
+    const gedaan = wkl.oef.filter(o=>o.sets.length).map(o=>o.n+": "+o.sets.map(setTekst).join("/")).join(" | ");
+    vraag += "Today's finished workout "+wkl.type+" ("+wkl.duur+" min): "+gedaan+". Compare with his earlier sessions of the same exercises. Verdict first (PR / on track / falling behind / lower the weight), then exactly what to do next session in kg × reps.";
+  } else {
+    vraag += "Today is "+DAGNAAM[new Date().getDay()]+", planned: "+TYPETEKST[type]+". Give a short pre-workout briefing: target weights for today's exercises based on his last sessions, and one thing to focus on. If it's a rest/cardio day (no workout data to plan): comment on his progression and recovery instead.";
+  }
+  try{
+    const t = await ollamaChat([
+      {role:"system", content:COACH_SYSTEEM},
+      {role:"user", content:vraag}
+    ]);
+    coachData[mode] = (t||"").trim() || "⚠️ Empty reply from AI";
+  }catch(e){
+    coachData[mode] = "⚠️ "+e.message;
+  }
+  renderTraining();
 }
 
 /* ---------- rust-timer ---------- */
