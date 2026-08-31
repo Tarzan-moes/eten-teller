@@ -317,7 +317,7 @@ const PLAN = {
 
 /* ---------- instellingen & data ---------- */
 const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, stappenDoel:8000, waterDoel:3,
-  proxyUrl:"", apiKey:"", model:"gpt-oss:120b"}, JSON.parse(localStorage.getItem("eten_set") || "{}"));
+  proxyUrl:"https://eten-teller.ps259405.workers.dev", apiKey:"", model:"gpt-oss:120b"}, JSON.parse(localStorage.getItem("eten_set") || "{}"));
 function bewaar(){ localStorage.setItem("eten_set", JSON.stringify(SET)); }
 const LOG = JSON.parse(localStorage.getItem("eten_log") || "{}");
 function bewaarLog(){ localStorage.setItem("eten_log", JSON.stringify(LOG)); }
