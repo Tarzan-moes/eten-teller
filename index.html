@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#10141b">
+<link rel="manifest" href="manifest.json">
 <title>Fit App</title>
 <style>
   :root { --bg:#10141b; --card:#1a2029; --line:#2a323f; --tekst:#e8ecf1; --grijs:#8b95a3; --groen:#3fb96f; --rood:#e05252; --blauw:#4a9eff; --geel:#e8b84a; }
@@ -185,6 +186,16 @@
       <input id="model" placeholder="gpt-oss:120b">
       <button class="aiknop" onclick="testAI()">🔑 Sleutel testen</button>
       <p class="fout" id="aiStatus"></p>
+    </div>
+    <div class="kaart">
+      <h3>🔔 Notificaties op je telefoon</h3>
+      <p class="klein">Elke ochtend 07:30 een weeg-herinnering, om 17:00 een trainings-herinnering (ma/di/do/vr). Werkt zodra je de site een keer hebt geopend met toestemming. <span class="klein" style="display:block;padding-top:4px">(Werkt op Android/Chrome; op iPhone pas vanaf iOS 16.4 en alleen als je de app op het beginscherm hebt gezet.)</span></p>
+      <div class="checkrij">
+        <button class="mini-knop" onclick="notifAan()">🔔 Aanzetten</button>
+        <button class="mini-knop" onclick="notifTest()">🧪 Test-push sturen</button>
+        <button class="mini-knop" onclick="notifUit()">🔕 Uitzetten</button>
+      </div>
+      <p class="fout" id="notifStatus"></p>
     </div>
     <div class="kaart">
       <h3>💾 Backup</h3>
@@ -1002,6 +1013,55 @@ document.getElementById("herstelFile").addEventListener("change", e=>{
 });
 function toast(m){ const el = document.getElementById("toast");
   el.textContent = m; el.classList.add("zichtbaar"); setTimeout(()=>el.classList.remove("zichtbaar"), 2200); }
+
+/* ---------- push-notificaties (via eten-notify Cloudflare Worker) ---------- */
+const NOTIFY_URL = "https://eten-notify.ps259405.workers.dev";
+const VAPID_PUBLIC = "BLmNza7BnCIGY370bP-wCHeXYQGv0zyh0jILqQln3OPlRUeT1z1YyMFqF1TBxhemtJ6RUswF7r5DOcg7XtwEv6c";
+function urlB64ToUint8(b64){
+  const pad = "=".repeat((4 - b64.length % 4) % 4);
+  const base64 = (b64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+function notifStatus(t){ document.getElementById("notifStatus").textContent = t; }
+async function notifRegistreer(){
+  if(!("serviceWorker" in navigator)){ notifStatus("Deze browser ondersteunt geen service workers."); return null; }
+  return await navigator.serviceWorker.register("sw.js");
+}
+async function notifAan(){
+  try{
+    if(!("PushManager" in window)){ notifStatus("Push wordt niet ondersteund in deze browser."); return; }
+    const toestemming = await Notification.requestPermission();
+    if(toestemming !== "granted"){ notifStatus("Toestemming geweigerd — zet 'm in de browser-instellingen van deze site."); return; }
+    notifStatus("Aanmelden…");
+    const reg = await notifRegistreer();
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToUint8(VAPID_PUBLIC)});
+    const r = await fetch(NOTIFY_URL+"/subscribe", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({subscription:sub.toJSON()})});
+    if(!r.ok) throw new Error("Worker zei HTTP "+r.status);
+    notifStatus("✅ Aan! Tip: voeg de site toe aan je beginscherm (⋮ → 'App installeren').");
+    toast("🔔 Notificaties staan aan");
+  }catch(e){ notifStatus("⚠️ "+e.message); }
+}
+async function notifTest(){
+  try{
+    const reg = await notifRegistreer();
+    if(!reg){ return; }
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub){ notifStatus("Zet eerst 🔔 Aanzetten."); return; }
+    const r = await fetch(NOTIFY_URL+"/test", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({subscription:sub.toJSON()})});
+    const j = await r.json();
+    notifStatus(j.ok ? "✅ Test verstuurd — kijk op je telefoon (site mag dicht)!" : "⚠️ Worker: "+JSON.stringify(j.resultaat||j.fout));
+  }catch(e){ notifStatus("⚠️ "+e.message); }
+}
+async function notifUit(){
+  try{
+    const reg = await notifRegistreer();
+    if(reg){ const sub = await reg.pushManager.getSubscription();
+      if(sub){ await fetch(NOTIFY_URL+"/unsubscribe", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({subscription:sub.toJSON()})}); await sub.unsubscribe(); } }
+    notifStatus("🔕 Uit — je krijgt geen pushes meer.");
+  }catch(e){ notifStatus("⚠️ "+e.message); }
+}
 
 /* ---------- listeners ---------- */
 document.querySelectorAll(".tabknop").forEach(b=>b.addEventListener("click", ()=>wisselTab(b.dataset.tab)));
