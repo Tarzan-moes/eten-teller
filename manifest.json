@@ -1,0 +1,16 @@
+{
+  "name": "Fit App",
+  "short_name": "Fit App",
+  "description": "Eten, training en voortgang — 12-weeks Upper/Lower plan",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#10141b",
+  "theme_color": "#10141b",
+  "lang": "nl",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
