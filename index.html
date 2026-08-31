@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="NL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#10141b">
+<title>Eten Teller</title>
+<style>
+  :root { --bg:#10141b; --card:#1a2029; --line:#2a323f; --tekst:#e8ecf1; --grijs:#8b95a3; --groen:#3fb96f; --rood:#e05252; --blauw:#4a9eff; --geel:#e8b84a; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--tekst); font-family:-apple-system,'Segoe UI',Roboto,sans-serif; min-height:100vh; padding-bottom:30px; }
+  .top { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px; }
+  h1 { font-size:19px; }
+  .knop-ico { background:var(--card); border:1px solid var(--line); color:var(--grijs); border-radius:10px; padding:7px 11px; font-size:14px; }
+  main { padding:0 12px; max-width:520px; margin:0 auto; }
+  .kaart { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:10px 0; }
+  .groot { font-size:30px; font-weight:700; }
+  .klein { color:var(--grijs); font-size:13px; }
+  .rij-tuss { display:flex; justify-content:space-between; gap:10px; margin-top:8px; font-size:14px; }
+  .balk { height:8px; background:#242c38; border-radius:5px; margin-top:8px; overflow:hidden; }
+  .balk > div { height:100%; border-radius:5px; transition:width .3s; background:var(--groen); }
+  .invoer { display:flex; gap:8px; margin-top:4px; }
+  input { background:#232b37; border:1px solid var(--line); color:var(--tekst); border-radius:10px; padding:12px; font-size:16px; width:100%; outline:none; }
+  input:focus { border-color:var(--blauw); }
+  .hoofdknop { background:var(--blauw); color:#fff; border:none; border-radius:10px; padding:12px 18px; font-size:15px; font-weight:600; white-space:nowrap; }
+  .aiknop { background:#3d2f14; color:var(--geel); border:1px solid #5a4520; border-radius:10px; padding:10px 14px; font-size:14px; margin-top:8px; width:100%; }
+  .uitkomst { margin-top:10px; }
+  .gevonden { display:flex; justify-content:space-between; padding:8px 4px; border-bottom:1px solid var(--line); font-size:14px; gap:8px; }
+  .fout { color:var(--rood); font-size:13px; padding:6px 4px; }
+  .totaal-rij { display:flex; justify-content:space-between; padding:10px 4px 2px; font-weight:700; font-size:15px; }
+  .logitem { display:flex; justify-content:space-between; align-items:center; padding:9px 4px; border-bottom:1px solid var(--line); font-size:14px; gap:8px; }
+  .logitem .del { color:var(--rood); background:none; border:none; font-size:16px; padding:2px 8px; }
+  .logitem .naam { flex:1; }
+  .logitem .mac { color:var(--grijs); font-size:13px; margin-right:8px; white-space:nowrap; }
+  .dagknoppen { display:flex; gap:6px; overflow-x:auto; padding:8px 0; }
+  .dagknop { flex:0 0 auto; background:var(--card); border:1px solid var(--line); color:var(--grijs); border-radius:9px; padding:6px 12px; font-size:13px; }
+  .dagknop.actief { background:var(--blauw); color:#fff; border-color:var(--blauw); }
+  .inst { display:none; }
+  .inst.open { display:block; }
+  .inst label { display:block; font-size:13px; color:var(--grijs); margin:12px 0 4px; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--groen); color:#fff; padding:10px 18px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:9; }
+  .toast.zichtbaar { opacity:1; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🍽️ Eten Teller</h1>
+  <button class="knop-ico" onclick="document.getElementById('inst').classList.toggle('open')">⚙️ Instellingen</button>
+</div>
+<main>
+
+  <div class="kaart inst" id="inst">
+    <label>Doel kcal per trainingsdag (Ma/Di/Do/Vr)</label>
+    <input id="doelKcalT" type="number" inputmode="numeric">
+    <label>Doel kcal per rustdag</label>
+    <input id="doelKcalR" type="number" inputmode="numeric">
+    <label>Doel eiwit per dag (gram)</label>
+    <input id="doelEiwit" type="number" inputmode="numeric">
+    <label>Ollama API-sleutel (maak 1 op ollama.com/settings/keys) — bleibt alleen op je toestel</label>
+    <input id="apiKey" type="password" placeholder="bv. 1234abcd...">
+    <label>Ollama cloud model</label>
+    <input id="model" placeholder="gpt-oss:120b">
+    <button class="aiknop" onclick="testAI()">🔑 Sleutel testen</button>
+    <p class="fout" id="aiStatus"></p>
+  </div>
+
+  <div class="kaart">
+    <div class="rij-tuss" style="margin:0 0 8px"><span class="klein" id="datumRegel"></span><span class="klein" id="dagType"></span></div>
+    <div class="groot" id="kcalResterend">–</div>
+    <div class="balk"><div id="kcalBalk"></div></div>
+    <div class="rij-tuss"><span id="gegetenKcal" class="klein"></span><span id="eiwitRegel" class="klein"></span></div>
+  </div>
+
+  <div class="kaart">
+    <div class="invoer">
+      <input id="eten" placeholder="bv. 200 gram kip en 2 eieren" autocomplete="off">
+      <button class="hoofdknop" onclick="toevoegen()">＋</button>
+    </div>
+    <div class="uitkomst" id="resultaat"></div>
+    <button class="aiknop" id="aiKnop" style="display:none">🤖 Niet alles herkend — laat AI het uitrekenen</button>
+  </div>
+
+  <div class="dagknoppen" id="dagknoppen"></div>
+
+  <div class="kaart">
+    <div class="rij-tuss" style="margin:0">
+      <b>Log</b>
+      <button class="knop-ico" onclick="exporteer()">📋 Kopieer naar logboek</button>
+    </div>
+    <div id="loglijst"></div>
+  </div>
+
+  <div class="kaart">
+    <b style="font-size:14px">Weekoverzicht</b>
+    <div id="week"></div>
+  </div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- NL-voedingsdatabase (per 100 g/ml, benadering op basis van AH/NEVO-waarden) ---------- */
+const DB = [
+  {n:"Kipfilet",        k:110, p:23.3, d:150, al:["kipfilet","kip","kippendij","chicken"]},
+  {n:"Kipdijfilet",     k:146, p:19.0, d:150, al:["kipdijfilet","kipdij"]},
+  {n:"Kalkoenfilet",    k:105, p:22.0, d:150, al:["kalkoen"]},
+  {n:"Ei",              k:143, p:12.5, al:["eieren","eitjes","eitje","ei"], stuk:{g:55,k:75,p:6.8}},
+  {n:"Roerei/gebakken ei", k:180, p:11, d:150, al:["roerei","gebakken ei"]},
+  {n:"Mager rundergehakt (5%)", k:147, p:21.5, d:150, al:["gehackt","rundergehakt","gehaktbal"]},
+  {n:"Biefstuk",        k:132, p:21.0, d:150, al:["biefstuk","rundvlees","steak"]},
+  {n:"Volkorenbrood",   k:218, p:9.0,  al:["brood","volkoren"], stuk:{g:40,k:87,p:3.6}, stuknaam:"snee"},
+  {n:"Havermout",       k:372, p:13.0, d:60,  al:["havermout","havermot"]},
+  {n:"Melk (halfvol)",  k:47,  p:3.5,  al:["melk"], stuk:{g:200,k:94,p:7}, stuknaam:"glas"},
+  {n:"Magere kwark",    k:58,  p:8.0,  al:["kwark","huttenkase"], stuk:{g:150,k:87,p:12}, stuknaam:"bakje"},
+  {n:"Skyr",            k:56,  p:11.0, d:150, al:["skyr"]},
+  {n:"Griekse yoghurt", k:97,  p:8.7,  d:150, al:["griekse yoghurt","yoghurt","yogurt"]},
+  {n:"Whey shake",      k:375, p:75.0, al:["whey","shake","proteine","eiwitpoeder","shaker"], stuk:{g:30,k:113,p:22.5}, stuknaam:"scoop"},
+  {n:"Kaas 30+",        k:366, p:26.0, al:["kaas","goudse","cheddar"], stuk:{g:20,k:73,p:5.2}, stuknaam:"plak"},
+  {n:"Pindakaas",       k:620, p:26.0, d:20,  al:["pindakaas","pindasaus"]},
+  {n:"Pinda's",         k:567, p:26.0, d:30,  al:["pinda","noten","cashew"]},
+  {n:"Olijfolie",       k:884, p:0,    d:15,  al:["olijfolie","olie"]},
+  {n:"Boter",           k:717, p:0.7,  d:10,  al:["boter","margarine"]},
+  {n:"Rijst (gaar)",    k:130, p:2.7,  al:["rijst"], stuk:{g:70,k:91,p:1.9}, stuknaam:"lepel"},
+  {n:"Aardappelen (gaar)", k:78, p:2.0, d:200, al:["aardappelen","aardappel","friet"]},
+  {n:"Pasta (gaar)",    k:131, p:5.0,  d:200, al:["pasta","spaghetti","penne","macaroni","noodles"]},
+  {n:"Bulgur/couscous (gaar)", k:112, p:3.4, d:200, al:["bulgur","couscous"]},
+  {n:"Banaan",          k:89,  p:1.1,  al:["bananen","banaan"], stuk:{g:110,k:98,p:1.2}},
+  {n:"Appel",           k:52,  p:0.3,  al:["appels","appel"], stuk:{g:150,k:78,p:0.5}},
+  {n:"Sinaasappel",     k:47,  p:0.9,  d:150, al:["sinaasappel","mandarijn"]},
+  {n:"Spinazie",        k:23,  p:3.0,  d:200, al:["spinazie"]},
+  {n:"Broccoli",        k:34,  p:2.8,  d:200, al:["broccoli"]},
+  {n:"Tomaten",         k:18,  p:0.9,  d:100, al:["tomaten","tomaat"]},
+  {n:"Groenten gemengd",k:53,  p:2.5,  d:150, al:["groenten","groente","roerbak","zomerse"]},
+  {n:"Sla/komkommer/paprika", k:15, p:1.4, d:50, al:["paprika","komkommer","sla"]},
+  {n:"Snoep/koek/chocola", k:450, p:4, d:30, al:["stroopwafel","chocolade","koek","snoep","chips"]},
+  {n:"Frisdrank (met suiker)", k:42, p:0, d:250, al:["icetea","ice tea","frisdrank","cola","fanta","sprite","sinas"]},
+];
+
+/* ---------- instellingen & data ---------- */
+const SET = Object.assign({doelKcalT:2100, doelKcalR:1950, doelEiwit:145, apiKey:"", model:"gpt-oss:120b"},
+  JSON.parse(localStorage.getItem("eten_set") || "{}"));
+function bewaar(){ localStorage.setItem("eten_set", JSON.stringify(SET)); }
+const LOG = JSON.parse(localStorage.getItem("eten_log") || "{}");
+function bewaarLog(){ localStorage.setItem("eten_log", JSON.stringify(LOG)); }
+
+const TRAININGSDAGEN = [0,1,3,4]; // ma(0), di(1), do(3), vr(4) — zelfde als Gym/Schedule
+const DAGNAAM = ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"];
+let bekijkDag = dagISO(0);
+function dagISO(terug){ const d = new Date(); d.setDate(d.getDate()-terug);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function doelVandaag(iso){ const d = new Date(iso+"T12:00");
+  return TRAININGSDAGEN.includes((d.getDay()+6)%7) ? SET.doelKcalT : SET.doelKcalR; }
+
+/* ---------- parser ---------- */
+function normaal(s){ return s.toLowerCase().replace(/[ëé]/g,"e").replace(/\s+/g," ").trim(); }
+function vindVoeding(c){
+  let beste = null, bestLen = 0;
+  for(const f of DB){ for(const a of f.al){
+    const rx = new RegExp("(^|[^a-z])" + a.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "($|[^a-z])");
+    if(rx.test(c) && a.length > bestLen){ bestLen = a.length; beste = f; }
+  } }
+  return beste;
+}
+function parseInvoer(t){
+  const parts = normaal(t).split(/\s+en\s+|,\s+|\s*\+\s*|\s+met\s+/).filter(Boolean);
+  const goed = [], fout = [];
+  for(const p of parts){
+    const m = p.match(/^(\d+(?:[.,]\d+)?)\s*(kg|dg|dl|gram|gr|ml|stuks|stuk|plakken|plak|sneetjes|snee|eetlepels|eetlepel|theelepels|theelepel|lepel|opscheplepel|bakje|glazen|glas|scoops|scoop|el|tl|g)?\s*(.*)$/);
+    let getal = m ? parseFloat(m[1].replace(",",".")) : null;
+    let unit  = m ? (m[2] || "") : "";
+    let naam  = m ? ((m[3] || "").trim() || p) : p;
+    const f = vindVoeding(naam) || vindVoeding(p);
+    if(!f){ fout.push({tekst:p}); continue; }
+    const MEERVT = {"stuks":"stuk","sneetjes":"snee","plakken":"plak","scoops":"scoop","glazen":"glas","eetlepels":"el","theelepels":"tl"};
+    const u = MEERVT[unit] || unit.replace(/s$/, "");
+    let gram;
+    if(f.stuk && (getal !== null && (u === "" || ["stuk","plak","snee","scoop","glas","bakje"].includes(u)))){
+      gram = getal * f.stuk.g;                       // op aantal: "2 eieren", "4 sneetjes brood"
+    } else if(u === "kg"){ gram = (getal===null?1:getal) * 1000;
+    } else if(u === "dg"){ gram = (getal===null?1:getal) * 10;
+    } else if(u === "dl"){ gram = (getal===null?1:getal) * 100;
+    } else if(u === "el" || u === "eetlepel"){ gram = (getal===null?1:getal) * 20;
+    } else if(u === "tl" || u === "theelepel"){ gram = (getal===null?1:getal) * 7;
+    } else if(u === "lepel" || u === "opscheplepel"){ gram = (getal===null?1:getal) * 70;
+    } else if(u === "bakje"){ gram = (getal===null?1:getal) * 150;
+    } else if(u === "glas"){ gram = (getal===null?1:getal) * 200;
+    } else if(getal === null){ gram = f.stuk ? f.stuk.g : (f.d || 0);      // alleen naam: 1 standaardportie
+    } else { gram = getal; }                                       // gram / ml
+    goed.push({naam:f.n, gram:Math.round(gram), kcal:Math.round(f.k*gram/100), eiwit:Math.round(f.p*gram/10)/10});
+  }
+  return {goed, fout};
+}
+
+/* ---------- weergave ---------- */
+function fmt(x){ return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g,"."); }
+function render(){
+  bewaar();
+  document.getElementById("doelKcalT").value = SET.doelKcalT;
+  document.getElementById("doelKcalR").value = SET.doelKcalR;
+  document.getElementById("doelEiwit").value = SET.doelEiwit;
+  document.getElementById("apiKey").value = SET.apiKey;
+  document.getElementById("model").value = SET.model;
+
+  const doelen = doelVandaag(bekijkDag);
+  const rijen = LOG[bekijkDag] || [];
+  const kDag = rijen.reduce((s,r)=>s+r.kcal,0);
+  const pDag = rijen.reduce((s,r)=>s+r.eiwit,0);
+  const pct = Math.min(100, kDag/doelen*100);
+  const isTrain = doelen === SET.doelKcalT;
+
+  document.getElementById("datumRegel").textContent =
+    DAGNAAM[new Date(bekijkDag+"T12:00").getDay()] + " " + bekijkDag.split("-").reverse().join("-");
+  document.getElementById("dagType").textContent = (isTrain?"🏋️ Trainingsdag":"😴 Rustdag") + " · doel " + fmt(doelen) + " kcal";
+  document.getElementById("kcalResterend").textContent = fmt(Math.max(0, doelen-kDag)) + " kcal over";
+  const balk = document.getElementById("kcalBalk");
+  balk.style.width = pct + "%";
+  balk.style.background = pct > 100 ? "var(--rood)" : pct > 85 ? "var(--geel)" : "var(--groen)";
+  document.getElementById("gegetenKcal").textContent = "Gegeten: " + fmt(kDag) + " / " + fmt(doelen) + " kcal";
+  document.getElementById("eiwitRegel").textContent = "🥩 Eiwit: " + fmt(pDag) + " / " + SET.doelEiwit +
+    " g (nog " + fmt(Math.max(0, SET.doelEiwit-pDag)) + " g over)";
+
+  const lijst = document.getElementById("loglijst"); lijst.innerHTML = "";
+  if(!rijen.length) lijst.innerHTML = '<p class="klein" style="padding:8px 2px">Nog niets gelogd op deze dag.</p>';
+  (LOG[bekijkDag]||[]).forEach((r,i)=>{
+    const div = document.createElement("div"); div.className = "logitem";
+    const src = r.src==="Ai" ? "" : ' <span class="klein">· '+r.gram+' g</span>';
+    div.innerHTML = '<span class="naam">'+r.naam+src+'</span><span class="mac">'+r.kcal+' kcal · '+r.eiwit+' g ei</span>';
+    const b = document.createElement("button"); b.className = "del"; b.textContent = "🗑";
+    b.onclick = ()=>{ LOG[bekijkDag].splice(i,1); bewaarLog(); render(); };
+    div.appendChild(b); lijst.appendChild(div);
+  });
+
+  const dk = document.getElementById("dagknoppen"); dk.innerHTML = "";
+  for(let i=6;i>=0;i--){
+    const iso = dagISO(i), d = new Date(iso+"T12:00");
+    const b = document.createElement("button");
+    b.className = "dagknop" + (iso===bekijkDag ? " actief":"");
+    const tot = (LOG[iso]||[]).reduce((s,r)=>s+r.kcal,0);
+    b.textContent = DAGNAAM[d.getDay()].slice(0,2) + (tot ? " " + fmt(tot) : "");
+    b.onclick = ()=>{ bekijkDag = iso; render(); };
+    dk.appendChild(b);
+  }
+
+  const wk = document.getElementById("week"); wk.innerHTML = "";
+  let wkK=0, wkP=0, dagenMet=0;
+  for(let i=6;i>=0;i--){
+    const iso = dagISO(i), d = new Date(iso+"T12:00");
+    const r = LOG[iso]||[];
+    if(r.length) dagenMet++;
+    const k = r.reduce((s,x)=>s+x.kcal,0), p = r.reduce((s,x)=>s+x.eiwit,0);
+    wkK += k; wkP += p;
+    const dv = doelVandaag(iso);
+    wk.innerHTML += '<div class="logitem"><span class="naam">'+DAGNAAM[d.getDay()]+'</span><span class="mac">'+
+      (r.length ? fmt(k)+' / '+fmt(dv)+' kcal · '+fmt(p)+' g ei'+(k>dv?' <span style="color:var(--rood)">↑</span>':'') : '—')+'</span></div>';
+  }
+  if(dagenMet) wk.innerHTML += '<p class="klein" style="padding:8px 2px">Gemiddeld op deze '+dagenMet+' log-dagen: '+
+    fmt(wkK/dagenMet)+' kcal · '+fmt(wkP/dagenMet)+' g eiwit.</p>';
+}
+
+function toevoegen(){
+  const t = document.getElementById("eten").value;
+  if(!t.trim()) return;
+  const r = parseInvoer(t);
+  document.getElementById("resultaat").innerHTML = "";
+  if(!r.goed.length){
+    document.getElementById("resultaat").innerHTML =
+      '<p class="fout">Niks herkend in "'+t+'". Probeer bijv. "350 gram rijst en 150 gram kip" — of gebruik de AI-knop.</p>';
+    toonAI(t); return;
+  }
+  if(!LOG[bekijkDag]) LOG[bekijkDag] = [];
+  r.goed.forEach(g=>LOG[bekijkDag].push({naam:g.naam, gram:g.gram, kcal:g.kcal, eiwit:g.eiwit}));
+  bewaarLog();
+  let html = "";
+  r.goed.forEach(g=>{ html += '<div class="gevonden"><span>'+g.naam+' <span class="klein">· '+g.gram+' g</span></span><span><b>'+g.kcal+' kcal</b> · '+g.eiwit+' g ei</span></div>'; });
+  const totK = r.goed.reduce((s,g)=>s+g.kcal,0), totP = Math.round(r.goed.reduce((s,g)=>s+g.eiwit,0)*10)/10;
+  html += '<div class="totaal-rij"><span>Totaal</span><span>'+fmt(totK)+' kcal · '+totP+' g ei</span></div>';
+  document.getElementById("resultaat").innerHTML = html;
+  if(r.fout.length){
+    document.getElementById("resultaat").innerHTML += '<p class="fout">Niet herkend: '+r.fout.map(f=>'"'+f.tekst+'"').join(", ")+'</p>';
+    toonAI(t);
+  } else document.getElementById("aiKnop").style.display = "none";
+  document.getElementById("eten").value = "";
+  toast("✅ "+fmt(totK)+" kcal · "+totP+" g eiwit toegevoegd");
+  render();
+}
+function toonAI(tekst){
+  const kn = document.getElementById("aiKnop");
+  kn.dataset.tekst = tekst;
+  kn.style.display = "";
+}
+
+/* ---------- AI via Ollama Cloud ---------- */
+async function ollamaChat(berichten){
+  const antw = await fetch("https://ollama.com/api/chat", {
+    method:"POST",
+    headers:{"Content-Type":"application/json", "Authorization":"Bearer "+SET.apiKey},
+    body: JSON.stringify({model: SET.model || "gpt-oss:120b", stream:false, messages: berichten})
+  });
+  if(antw.status === 401) throw new Error("API-sleutel ongeldig (401)");
+  if(!antw.ok) throw new Error("HTTP " + antw.status);
+  const j = await antw.json();
+  return (j.message && j.message.content) || "";
+}
+async function viaAI(){
+  const t = document.getElementById("aiKnop").dataset.tekst || document.getElementById("eten").value;
+  if(!SET.apiKey){
+    document.getElementById("resultaat").innerHTML = '<p class="fout">Zet eerst je Ollama API-sleutel in ⚙️ Instellingen (maak er 1 op ollama.com/settings/keys).</p>';
+    return;
+  }
+  document.getElementById("resultaat").innerHTML = '<p class="klein">🤖 AI rekent uit…</p>';
+  try{
+    const tekst = await ollamaChat([
+      {role:"system", content:"Je bent een voedingscalculator voor Nederlandse producten (AH/NEVO-waarden). Antwoord ALLEEN met JSON, geen tekst eromheen. Format: [{\"naam\":\"...\",\"gram\":200,\"kcal\":220,\"eiwit\":46}] — kcal en eiwit uitgerekend voor de gegeven gram."},
+      {role:"user", content:"Eten: \"" + t + "\", verwacht 1–6 items."}
+    ]);
+    const m = tekst.match(/\[[\s\S]*\]/);
+    if(!m) throw new Error("Vreemd antwoord van AI");
+    const items = JSON.parse(m[0]);
+    if(!LOG[bekijkDag]) LOG[bekijkDag] = [];
+    let totK=0, totP=0, html = "";
+    items.forEach(it=>{
+      const kcal = Math.round(it.kcal||0), ei = Math.round((it.eiwit||0)*10)/10;
+      if(!it.naam) return;
+      LOG[bekijkDag].push({naam: it.naam, gram: it.gram||0, kcal, eiwit: ei, src:"Ai"});
+      totK += kcal; totP += ei;
+      html += '<div class="gevonden"><span>'+it.naam+' <span class="klein">· AI</span></span><span><b>'+kcal+' kcal</b> · '+ei+' g ei</span></div>';
+    });
+    html += '<div class="totaal-rij"><span>AI-totaal</span><span>'+fmt(totK)+' kcal · '+Math.round(totP*10)/10+' g ei</span></div>';
+    document.getElementById("resultaat").innerHTML = html;
+    bewaarLog(); document.getElementById("aiKnop").style.display = "none";
+    document.getElementById("eten").value = "";
+    toast("🤖 AI toegevoegd"); render();
+  }catch(e){
+    document.getElementById("resultaat").innerHTML = '<p class="fout">AI-fout: '+e.message+'</p>';
+  }
+}
+async function testAI(){
+  const s = document.getElementById("aiStatus");
+  SET.apiKey = document.getElementById("apiKey").value.trim();
+  SET.model = document.getElementById("model").value.trim() || "gpt-oss:120b";
+  bewaar();
+  if(!SET.apiKey){ s.textContent = "Vul eerst een sleutel in."; return; }
+  s.textContent = "Testen…";
+  try{ await ollamaChat([{role:"user", content:"Antwoord met alleen: ok"}]);
+    s.textContent = "✅ Werkt! Model: " + SET.model;
+  }catch(e){ s.textContent = "⚠️ " + e.message; }
+}
+
+/* ---------- export / misc ---------- */
+function exporteer(){
+  const iso = dagISO(0), rijen = LOG[iso] || [];
+  if(!rijen.length){ toast("Nog niks gelogd vandaag"); return; }
+  const k = rijen.reduce((s,r)=>s+r.kcal,0), p = rijen.reduce((s,r)=>s+r.eiwit,0);
+  const t = iso + " — " + fmt(k) + " / " + fmt(doelVandaag(iso)) + " kcal · " + fmt(p) + " / " + SET.doelEiwit +
+    " g eiwit\n" + rijen.map(r=>"- "+r.naam+" ("+r.gram+" g): "+r.kcal+" kcal, "+r.eiwit+" g eiwit").join("\n");
+  navigator.clipboard.writeText(t).then(()=>toast("📋 Gekopieerd — plak in je Obsidian Food Log"), ()=>toast("Kopiëren mislukt"));
+}
+function vandaagISO(){ return dagISO(0); }
+function toast(m){ const el = document.getElementById("toast");
+  el.textContent = m; el.classList.add("zichtbaar"); setTimeout(()=>el.classList.remove("zichtbaar"), 2200); }
+
+document.getElementById("eten").addEventListener("keydown", e=>{ if(e.key==="Enter") toevoegen(); });
+document.getElementById("aiKnop").addEventListener("click", viaAI);
+["doelKcalT","doelKcalR","doelEiwit","apiKey","model"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", e=>{
+    const v = e.target.value.trim();
+    SET[id] = ["doelKcalT","doelKcalR","doelEiwit"].includes(id) ? (parseInt(v)||SET[id]) : v;
+    bewaar(); render();
+  });
+});
+render();
+</script>
+</body>
+</html>
